@@ -1,0 +1,177 @@
+<script>
+  function incrementWeight(weight, delta) {
+    const floatWeight = parseFloat(weight);
+    if (isNaN(floatWeight)) return weight;
+    const newWeight = floatWeight + delta;
+    return String(Number(newWeight.toFixed(10)));
+  }
+
+  function findNearestEnclosure(text, cursorPos) {
+    let start = cursorPos,
+      end = cursorPos;
+    let openCount = 0,
+      closeCount = 0;
+
+    // Find opening parenthesis before cursor
+    while (start >= 0) {
+      start--;
+      if (text[start] === "(" && openCount === closeCount) break;
+      if (text[start] === "(") openCount++;
+      if (text[start] === ")") closeCount++;
+    }
+    if (start < 0) return null;
+
+    openCount = 0;
+    closeCount = 0;
+
+    // Find closing parenthesis after cursor
+    while (end < text.length) {
+      if (text[end] === ")" && openCount === closeCount) break;
+      if (text[end] === "(") openCount++;
+      if (text[end] === ")") closeCount++;
+      end++;
+    }
+    if (end === text.length) return null;
+
+    return { start: start + 1, end: end };
+  }
+
+  function addWeightToParentheses(text) {
+    const parenRegex = /^\((.*)\)$/;
+    const parenMatch = text.match(parenRegex);
+
+    const floatRegex = /:([+-]?(\d*\.)?\d+([eE][+-]?\d+)?)/;
+    const floatMatch = text.match(floatRegex);
+
+    if (parenMatch && !floatMatch) {
+      return `(${parenMatch[1]}:1.0)`;
+    } else {
+      return text;
+    }
+  }
+
+  function setupAttentionEditing() {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const textareas = node.querySelectorAll(
+              ".attention-editable textarea"
+            );
+            textareas.forEach((textarea) => {
+              if (!textarea.dataset.attentionBound) {
+                textarea.addEventListener("keydown", handleAttentionKeydown);
+                textarea.dataset.attentionBound = "true";
+              }
+            });
+          }
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    document
+      .querySelectorAll(".attention-editable textarea")
+      .forEach((textarea) => {
+        textarea.addEventListener("keydown", handleAttentionKeydown);
+        textarea.dataset.attentionBound = "true";
+      });
+  }
+
+  function handleAttentionKeydown(event) {
+    const delta = 0.05;
+
+    if (!(event.key === "ArrowUp" || event.key === "ArrowDown")) return;
+    if (!event.ctrlKey && !event.metaKey) return;
+
+    event.preventDefault();
+
+    const inputField = event.currentTarget;
+    let start = inputField.selectionStart;
+    let end = inputField.selectionEnd;
+    let selectedText = inputField.value.substring(start, end);
+
+    // If no selection, find nearest enclosure or word
+    if (!selectedText) {
+      const nearestEnclosure = findNearestEnclosure(inputField.value, start);
+      if (nearestEnclosure) {
+        start = nearestEnclosure.start;
+        end = nearestEnclosure.end;
+        selectedText = inputField.value.substring(start, end);
+      } else {
+        // Select current word
+        const delimiters = " .,\\/!?%^*;:{}=-_`~()\\r\\n\\t";
+        while (start > 0 && !delimiters.includes(inputField.value[start - 1])) {
+          start--;
+        }
+        while (
+          end < inputField.value.length &&
+          !delimiters.includes(inputField.value[end])
+        ) {
+          end++;
+        }
+        selectedText = inputField.value.substring(start, end);
+        if (!selectedText) return;
+      }
+    }
+
+    // Trim trailing space if exists
+    if (selectedText[selectedText.length - 1] === " ") {
+      selectedText = selectedText.substring(0, selectedText.length - 1);
+      end -= 1;
+    }
+
+    // Expand selection to include surrounding parentheses
+    if (inputField.value[start - 1] === "(" && inputField.value[end] === ")") {
+      start -= 1;
+      end += 1;
+      selectedText = inputField.value.substring(start, end);
+    }
+
+    // Add parentheses if missing
+    if (
+      selectedText[0] !== "(" ||
+      selectedText[selectedText.length - 1] !== ")"
+    ) {
+      selectedText = `(${selectedText})`;
+    }
+
+    // Add weight if missing
+    selectedText = addWeightToParentheses(selectedText);
+
+    // Adjust weight
+    const weightDelta = event.key === "ArrowUp" ? delta : -delta;
+    const updatedText = selectedText.replace(
+      /\((.*):([+-]?\d+(?:\.\d+)?)\)/,
+      (match, text, weight) => {
+        weight = incrementWeight(weight, weightDelta);
+        return weight == 1 ? text : `(${text}:${weight})`;
+      }
+    );
+
+    // Update textarea value
+    const newValue =
+      inputField.value.substring(0, start) +
+      updatedText +
+      inputField.value.substring(end);
+
+    inputField.value = newValue;
+
+    // Update selection
+    inputField.setSelectionRange(start, start + updatedText.length);
+
+    // Trigger Gradio's input event for state management
+    const inputEvent = new Event("input", { bubbles: true });
+    inputField.dispatchEvent(inputEvent);
+  }
+
+  if (document.readyState === "complete") {
+    setupAttentionEditing();
+  } else {
+    window.addEventListener("load", setupAttentionEditing);
+  }
+</script>
