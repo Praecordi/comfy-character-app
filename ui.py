@@ -391,8 +391,8 @@ class UI:
         else:
             char_key = character.lower()
             return (
-                gr.update(value=characters[char_key]["hair_prompt"], interactive=False),
-                gr.update(value=characters[char_key]["eyes_prompt"], interactive=False),
+                gr.update(value=characters[char_key]["hair"], interactive=False),
+                gr.update(value=characters[char_key]["eyes"], interactive=False),
                 gr.update(
                     value=str(comfyui_input / characters[char_key]["face"]),
                     interactive=False,

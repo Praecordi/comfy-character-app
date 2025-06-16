@@ -1,7 +1,7 @@
 {
   "lara_croft": {
-    "hair_prompt": "braided brown hair, intricate details, slightly messy",
-    "eyes_prompt": "determined green eyes, sharp gaze, detailed eyelashes",
+    "hair": "braided brown hair, intricate details, slightly messy",
+    "eyes": "determined green eyes, sharp gaze, detailed eyelashes",
     "face": "lara_face_reference.png",
     "outfit": "tank top with holster straps",
     "accessories": "climbing gloves, backpack",
@@ -9,8 +9,8 @@
     "environment": "jungle ruins background"
   },
   "aloy": {
-    "hair_prompt": "red hair with tribal braids, slightly windswept",
-    "eyes_prompt": "intense hazel eyes, focused expression",
+    "hair": "red hair with tribal braids, slightly windswept",
+    "eyes": "intense hazel eyes, focused expression",
     "face": "aloy_face_reference.png",
     "outfit": "tribal armor with fur accents",
     "weapon": "compound bow",
@@ -18,8 +18,8 @@
     "environment": "post-apocalyptic wilderness"
   },
   "yennefer": {
-    "hair_prompt": "raven black wavy hair, voluminous",
-    "eyes_prompt": "mysterious violet eyes, intense gaze",
+    "hair": "raven black wavy hair, voluminous",
+    "eyes": "mysterious violet eyes, intense gaze",
     "face": "yennefer_face_reference.png",
     "outfit": "elegant black dress with lace details",
     "accessories": "silver necklace with obsidian charm",

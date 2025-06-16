@@ -1,0 +1,14 @@
+{
+  "comfyui_installation": "/path/to/your/comfyui",
+  "comfyui_server_url": "http://127.0.0.1:8188",
+  "characters_config": "./characters.json",
+  "app_constants": {
+    "union_controlnet": "your_controlnet.safetensors",
+    "instantid_model": "your_instantid.bin",
+    "instantid_controlnet": "your_instantid_controlnet.safetensors",
+    "lcm_lora": "your_lcm_lora.safetensors",
+    "turbo_lora": "your_turbo_lora.safetensors",
+    "dpo_turbo_lora": "your_dpo_turbo_lora.safetensors",
+    "hair_seg_model": "your_hair_seg_model.pt"
+  }
+}
