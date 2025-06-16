@@ -381,7 +381,7 @@ class UI:
         )
         block.unload(lambda: CharacterWorkflow.cancel_all())
 
-        self.preview.attach_load_event(self.get_next_preview, every=0.5)
+        self.preview.attach_load_event(self.get_next_preview, every=0.2)
 
     def start_preview_processor(self):
         self.stop_event.clear()
@@ -494,8 +494,8 @@ class UI:
 
         try:
             for result, label in wf.generate(process_controller):
-                if isinstance(result[0], ImageBatchResult):
-                    image = result[0].wait()
+                if result is not None:
+                    image = result.wait()
                     image_size = image[0].size
 
                     res_agg += [
@@ -503,6 +503,8 @@ class UI:
                     ]
 
                     yield gr.update(value=res_agg), gr.update()
+                else:
+                    yield gr.update(), gr.update()
         except IndexError:
             yield gr.update(value=res_agg), gr.update()
         finally:

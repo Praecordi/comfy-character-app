@@ -930,18 +930,25 @@ class CharacterWorkflow:
         return _preview_callback
 
     def generate(self, controller):
-        _, _, _, _, _, latent, _ = CRAspectRatio(aspect_ratio=self.resolution)
-        image = VAEDecode(latent, self.main_vae)
+        results = []
+        with Workflow(queue=False) as wf:
+            _, _, _, _, _, latent, _ = CRAspectRatio(aspect_ratio=self.resolution)
+            image = VAEDecode(latent, self.main_vae)
 
-        for i, (func, label) in enumerate(self.iter_wf(controller)):
-            latent, image = func(latent, image)
+            for func, label in self.iter_wf(controller):
+                latent, image = func(latent, image)
 
-            im_result = PreviewImage(image)
+                res = PreviewImage(image)
+                results.append((res, label))
 
-            task = queue.put(im_result)
-            task.add_preview_callback(self.generate_preview_callback())
+        wf.queue()
+        [
+            res.task.add_preview_callback(self.generate_preview_callback())
+            for res, _ in results
+        ]
 
-            yield task.wait(), label
+        for result, label in results:
+            yield result.wait(), label
 
     @staticmethod
     def cancel_current():
