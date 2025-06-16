@@ -27,6 +27,15 @@ Eyes Prompt: {eprompt}""".format(
     return text
 
 
+def make_character_description(character):
+    char_key = character.lower()
+    char_dict = characters[char_key]
+
+    desc = "\n".join([f"- **{{{key}}}**" for key in char_dict.keys()])
+
+    return desc
+
+
 class UI:
     def __init__(
         self,
@@ -150,7 +159,7 @@ class UI:
         with gr.Accordion("Output", open=False):
             with gr.Group():
                 with gr.Row(equal_height=True):
-                    with gr.Column(scale=2):
+                    with gr.Column(scale=3):
                         self.output_gallery = gr.Gallery(
                             label="Output Images",
                             format="png",
@@ -196,9 +205,13 @@ class UI:
         ]
 
         with gr.Row():
-            self.character = gr.Dropdown(
-                label="Character", choices=character_choices, scale=2
-            )
+            with gr.Column():
+                with gr.Group():
+                    self.character = gr.Dropdown(
+                        label="Character", choices=character_choices, scale=2
+                    )
+                    with gr.Accordion(label="Available Keys", open=False):
+                        self.character_description = gr.Markdown(padding=True)
 
             with gr.Column(scale=3):
                 self._create_custom_character_settings()
@@ -232,6 +245,7 @@ class UI:
                 self.hair_prompt,
                 self.eyes_prompt,
                 self.face_image,
+                self.character_description,
             ],
         )
 
@@ -355,9 +369,16 @@ class UI:
                 state.get("positive_prompt", ""),
                 state.get("negative_prompt", ""),
                 character,
+                make_character_description(character),
             ]
 
-        block.load(load_state, inputs=self.local_storage, outputs=all_input_components)
+        other_components = [self.character_description]
+
+        block.load(
+            load_state,
+            inputs=self.local_storage,
+            outputs=all_input_components + other_components,
+        )
         block.unload(lambda: CharacterWorkflow.cancel_all())
 
         self.preview.attach_load_event(self.get_next_preview, every=0.5)
@@ -387,6 +408,7 @@ class UI:
                 gr.update(value="", interactive=True),
                 gr.update(value="", interactive=True),
                 gr.update(value=None, interactive=True),
+                gr.update(value=""),
             )
         else:
             char_key = character.lower()
@@ -397,6 +419,7 @@ class UI:
                     value=str(comfyui_input / characters[char_key]["face"]),
                     interactive=False,
                 ),
+                gr.update(value=make_character_description(character)),
             )
 
     def on_checkpoint_change(self, checkpoint):
