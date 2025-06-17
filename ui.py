@@ -1,4 +1,5 @@
 from typing import List, Tuple
+import random
 
 import gradio as gr
 from comfy_script.runtime.data import ImageBatchResult
@@ -53,6 +54,7 @@ class UI:
         self.preview_queue = std_queue.Queue()
         self.stop_event = Event()
         self.preview_process_thread = None
+        self.stop_wf = False
 
     def create_ui(self):
         with gr.Blocks(
@@ -127,42 +129,57 @@ class UI:
                         label="Style Strength",
                     )
 
-    def _create_custom_character_settings(self):
-        with gr.Accordion("Custom Character", open=False):
+    def _create_character_settings(self):
+        character_choices = [char.capitalize() for char in characters.keys()] + [
+            "Custom"
+        ]
+
+        with gr.Group():
             with gr.Row():
-                with gr.Column():
-                    self.face_prompt = gr.Textbox(
-                        label="Face Prompt",
-                        lines=4,
-                        placeholder="Enter face prompt here...",
-                        interactive=True,
-                        elem_classes=["attention-editable"],
+                with gr.Column(scale=1):
+                    self.character = gr.Dropdown(
+                        label="Character", choices=character_choices, scale=2
                     )
-                    self.hair_prompt = gr.Textbox(
-                        label="Hair Prompt",
-                        lines=4,
-                        placeholder="Enter hair prompt here...",
-                        interactive=True,
-                        elem_classes=["attention-editable"],
-                    )
+                    with gr.Accordion(label="Available Keys", open=False):
+                        self.character_description = gr.Markdown(padding=True)
 
-                    self.eyes_prompt = gr.Textbox(
-                        label="Eyes Prompt",
-                        lines=4,
-                        placeholder="Enter eyes prompt here",
-                        interactive=True,
-                        elem_classes=["attention-editable"],
-                    )
+                with gr.Column(scale=3):
+                    with gr.Accordion("Custom Character", open=False):
+                        with gr.Row():
+                            with gr.Column(scale=1):
+                                self.face_prompt = gr.Textbox(
+                                    label="Face Prompt",
+                                    lines=4,
+                                    placeholder="Enter face prompt here...",
+                                    interactive=True,
+                                    elem_classes=["attention-editable"],
+                                )
+                                self.hair_prompt = gr.Textbox(
+                                    label="Hair Prompt",
+                                    lines=4,
+                                    placeholder="Enter hair prompt here...",
+                                    interactive=True,
+                                    elem_classes=["attention-editable"],
+                                )
 
-                self.face_image = gr.Image(
-                    label="Face Image",
-                    type="filepath",
-                    interactive=True,
-                    sources=["upload"],
-                    show_download_button=False,
-                    show_fullscreen_button=False,
-                    show_share_button=False,
-                )
+                                self.eyes_prompt = gr.Textbox(
+                                    label="Eyes Prompt",
+                                    lines=4,
+                                    placeholder="Enter eyes prompt here",
+                                    interactive=True,
+                                    elem_classes=["attention-editable"],
+                                )
+
+                            self.face_image = gr.Image(
+                                label="Face Image",
+                                type="filepath",
+                                interactive=True,
+                                sources=["upload"],
+                                show_download_button=False,
+                                show_fullscreen_button=False,
+                                show_share_button=False,
+                                scale=3,
+                            )
 
     def _create_output_panel(self):
         with gr.Accordion("Output", open=False):
@@ -209,21 +226,7 @@ class UI:
             elem_classes=["attention-editable"],
         )
 
-        character_choices = [char.capitalize() for char in characters.keys()] + [
-            "Custom"
-        ]
-
-        with gr.Row():
-            with gr.Column():
-                with gr.Group():
-                    self.character = gr.Dropdown(
-                        label="Character", choices=character_choices, scale=2
-                    )
-                    with gr.Accordion(label="Available Keys", open=False):
-                        self.character_description = gr.Markdown(padding=True)
-
-            with gr.Column(scale=3):
-                self._create_custom_character_settings()
+        self._create_character_settings()
 
         self.process_controller = gr.CheckboxGroup(
             label="Process Controllers",
@@ -242,9 +245,13 @@ class UI:
             )
 
         with gr.Row():
-            self.generate_btn = gr.Button("Generate")
-            self.interrupt_btn = gr.Button("Interrupt")
-            self.generate_all_btn = gr.Button("Generate All")
+            with gr.Column():
+                self.generate_btn = gr.Button("Generate")
+                self.generate_all_btn = gr.Button("Generate All")
+
+            with gr.Column():
+                self.interrupt_btn = gr.Button("Interrupt")
+                self.interrupt_all_btn = gr.Button("Interrupt All")
 
     def _setup_event_handlers(self, block):
         self.character.change(
@@ -304,8 +311,13 @@ class UI:
         )
 
         self.interrupt_btn.click(self.interrupt)
+        self.interrupt_all_btn.click(self.interrupt_all)
 
-        self.generate_all_btn.click(self.generate_all)
+        self.generate_all_btn.click(
+            self.generate_all,
+            inputs=all_input_components,
+            outputs=[self.output_gallery, self.output_text],
+        )
 
         self.local_storage = gr.BrowserState(
             storage_key="ccw-ui-state", secret="ccw_secret"
@@ -480,6 +492,11 @@ class UI:
         def handle_preview(image):
             self.preview_queue.put(image)
 
+        base_seed = random.randint(0, 10000000000) if base_seed == -1 else base_seed
+        perturb_seed = (
+            random.randint(0, 10000000000) if perturb_seed == -1 else perturb_seed
+        )
+
         wf = CharacterWorkflow(
             checkpoint,
             fewsteplora,
@@ -526,8 +543,106 @@ class UI:
         finally:
             self.stop_preview_processor()
 
+    def generate_all(
+        self,
+        checkpoint,
+        fewsteplora,
+        resolution,
+        upscaler,
+        style_prompt,
+        process_controller,
+        base_seed,
+        perturb_seed,
+        cn_image,
+        cn_strength,
+        style_image,
+        style_strength,
+        face_prompt,
+        hair_prompt,
+        eyes_prompt,
+        face_image,
+        pos_prompt,
+        neg_prompt,
+        character,
+    ):
+        self.stop_wf = False
+        self.start_preview_processor()
+        self.preview_queue = std_queue.Queue()
+
+        def handle_preview(image):
+            self.preview_queue.put(image)
+
+        character_keys = [key for key in characters if key != "Custom"]
+        accumulated_images = []
+
+        base_seed = random.randint(0, 10000000000) if base_seed == -1 else base_seed
+        perturb_seed = (
+            random.randint(0, 10000000000) if perturb_seed == -1 else perturb_seed
+        )
+
+        yield gr.update(value=accumulated_images), gr.update(
+            value="Starting batch generation for all characters..."
+        )
+
+        try:
+            for char_key in character_keys:
+                char_dict = characters[char_key]
+                char_name = char_key.capitalize()
+
+                wf = CharacterWorkflow(
+                    checkpoint,
+                    fewsteplora,
+                    resolution,
+                    upscaler,
+                    style_prompt,
+                    base_seed,
+                    perturb_seed,
+                    cn_image,
+                    cn_strength,
+                    style_image,
+                    style_strength,
+                    char_dict["face"],
+                    char_dict["hair"],
+                    char_dict["eyes"],
+                    char_dict["face-reference"],
+                    pos_prompt,
+                    neg_prompt,
+                    char_name,
+                    preview_callback=handle_preview,
+                )
+
+                for result, label in wf.generate(process_controller):
+                    if self.stop_wf:
+                        raise InterruptedError("Workflow interrupted")
+
+                    if result is not None:
+                        image = result.wait()
+                        image_size = image[0].size
+                        label_str = (
+                            f"{char_name}: {label} ({image_size[0]} x {image_size[1]})"
+                        )
+                        accumulated_images.append((image[0], label_str))
+
+                    out_text = f"Generating: {char_name}\n" + make_output_text(
+                        wf.resolved_prompts, wf.base_seed, wf.perturb_seed
+                    )
+
+                    yield gr.update(value=accumulated_images), gr.update(value=out_text)
+        except InterruptedError:
+            yield gr.update(value=accumulated_images), gr.update(
+                value="Batch generation interrupted!"
+            )
+            self.stop_preview_processor()
+            return
+
+        yield gr.update(value=accumulated_images), gr.update(
+            value="Batch generation completed!"
+        )
+        self.stop_preview_processor()
+
     def interrupt(self):
         CharacterWorkflow.cancel_current()
 
-    def generate_all(self):
-        pass
+    def interrupt_all(self):
+        self.stop_wf = True
+        CharacterWorkflow.cancel_all()

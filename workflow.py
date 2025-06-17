@@ -1,5 +1,4 @@
 import re
-import random
 
 from constants import comfyui_server_url, characters, app_constants
 
@@ -268,12 +267,10 @@ class CharacterWorkflow:
         self.cn = SetUnionControlNetType(self.cn, "auto")
 
         self.resolution = resolution
-        self.base_seed = (
-            random.randint(0, 10000000000) if base_seed == -1 else base_seed
-        )
-        self.perturb_seed = (
-            random.randint(0, 10000000000) if perturb_seed == -1 else perturb_seed
-        )
+        assert base_seed > 0
+        assert perturb_seed > 0
+        self.base_seed = base_seed
+        self.perturb_seed = perturb_seed
 
         self.resolved_prompts = self._process_prompt(
             pos_prompt,
