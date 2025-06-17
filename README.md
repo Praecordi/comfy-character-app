@@ -29,6 +29,7 @@ This project provides a Gradio-based interface for generating consistent charact
 - ComfyUI Essentials (https://github.com/cubiq/ComfyUI_essentials)
 - Comfyroll Studio (https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes)
 - ComfyUI Neural Network Latent Upscale (https://github.com/Ttl/ComfyUi_NNLatentUpscale)
+- Facerestore CF (https://github.com/mav-rik/facerestore_cf)
 
 ## Installation
 
@@ -96,9 +97,10 @@ python main.py
 
 The JSON file defines all your characters. See `character.example.json` for a template. The required components for each character include:
 
+- `face_prompt`: Description of character's face
 - `hair_prompt`: Description of character's hair
 - `eyes_prompt`: Description of character's eyes
-- `face`: Path to reference face image
+- `face-reference`: Path to reference face image
 
 Additional attributes can be added which can then be used in the prompt template.
 

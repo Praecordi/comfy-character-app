@@ -76,6 +76,7 @@ class CharacterWorkflow:
         cn_strength,
         style_image,
         style_strength,
+        face_prompt,
         hair_prompt,
         eyes_prompt,
         face_image,
@@ -278,6 +279,7 @@ class CharacterWorkflow:
             pos_prompt,
             neg_prompt,
             style_prompt=style_prompt,
+            face_prompt=face_prompt,
             hair_prompt=hair_prompt,
             eyes_prompt=eyes_prompt,
             apply_character=character,
@@ -306,6 +308,18 @@ class CharacterWorkflow:
             4096,
             self.resolved_prompts["negative"],
             self.resolved_prompts["negative"],
+        )
+
+        self.face_condition = CLIPTextEncodeSDXL(
+            self.main_clip,
+            4096,
+            4096,
+            0,
+            0,
+            4096,
+            4096,
+            self.resolved_prompts["face"],
+            self.resolved_prompts["face"],
         )
 
         self.hair_condition = CLIPTextEncodeSDXL(
@@ -359,6 +373,7 @@ class CharacterWorkflow:
         pos_prompt,
         neg_prompt,
         style_prompt=None,
+        face_prompt=None,
         hair_prompt=None,
         eyes_prompt=None,
         apply_scores=False,
@@ -380,11 +395,25 @@ class CharacterWorkflow:
             "negative": ", ".join(neg_separated),
         }
 
+        if face_prompt is not None:
+            face_separated = clean_and_separate(face_prompt)
+
+            if apply_scores:
+                face_separated = ["score_9"] + face_separated
+
+            if style_prompt is not None:
+                face_separated += style_separated
+
+            to_return["face"] = ", ".join(face_separated)
+
         if hair_prompt is not None:
             hair_separated = clean_and_separate(hair_prompt)
 
             if apply_scores:
                 hair_separated = ["score_9"] + hair_separated
+
+            if style_prompt is not None:
+                hair_separated += style_separated
 
             to_return["hair"] = ", ".join(hair_separated)
 
@@ -393,6 +422,9 @@ class CharacterWorkflow:
 
             if apply_scores:
                 eyes_separated = ["score_9"] + eyes_separated
+
+            if style_prompt is not None:
+                eyes_separated += style_separated
 
             to_return["eyes"] = ", ".join(eyes_separated)
 
@@ -638,8 +670,10 @@ class CharacterWorkflow:
             resize_width=1024,
         )
 
+        positive = ConditioningConcat(self.face_condition, self.pos_condition)
+
         positive, negative = ControlNetApplyAdvanced(
-            self.pos_condition,
+            positive,
             ConditioningZeroOut(self.neg_condition),
             control_net=self.cn,
             image=cropped_image,
@@ -689,6 +723,14 @@ class CharacterWorkflow:
         cropped_image, _, _ = ImageResize_(
             cropped_image, width, height, "lanczos", "keep proportion", "always", 0
         )
+
+        cropped_image = FaceRestoreCFWithModel(
+            FaceRestoreModelLoader(FaceRestoreModelLoader.model_name.codeformer_v0_1_0),
+            cropped_image,
+            FaceRestoreCFWithModel.facedetection.retinaface_resnet50,
+            0.5,
+        )
+
         seg_elt = ImpactEditSEGELT(seg_elt, cropped_image)
         segs = ImpactAssembleSEGS(segs_header, seg_elt)
         image = SEGSPaste(image, segs, 30, 255)
@@ -837,13 +879,14 @@ class CharacterWorkflow:
     @gen_step(label="Image Upscale", order=5)
     def image_upscale(self, latent, image):
         positive = ConditioningConcat(self.pos_condition, self.eyes_condition)
+        positive = ConditioningConcat(positive, self.face_condition)
         positive = ConditioningConcat(positive, self.hair_condition)
         positive, negative = ControlNetApplyAdvanced(
             positive,
             self.neg_condition,
             control_net=self.cn,
             image=image,
-            strength=0.7,
+            strength=0.8,
             start_percent=0,
             end_percent=1,
             vae=self.main_vae,
@@ -858,7 +901,7 @@ class CharacterWorkflow:
             pipe=main_pipe,
             steps=self.steps["image_upscale"],
             cfg=self._scale_cfg(self.cfg["image_upscale"]),
-            denoise=(0.8, 0.7),
+            denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=5,
             sharpen=0.4,
@@ -929,7 +972,7 @@ class CharacterWorkflow:
 
         for result, label in results:
             callback = self.generate_preview_callback()
-            
+
             result.task.add_preview_callback(callback)
             yield result.wait(), label
             result.task.remove_preview_callback(callback)

@@ -14,12 +14,14 @@ def make_output_text(resolved_prompts, base_seed, perturb_seed):
 Perturb Seed: {pseed}
 Positive Prompt: {pprompt}
 Negative Prompt: {nprompt}
+Face Prompt: {fprompt}
 Hair Prompt: {hprompt}
 Eyes Prompt: {eprompt}""".format(
         bseed=base_seed,
         pseed=perturb_seed,
         pprompt=resolved_prompts["positive"],
         nprompt=resolved_prompts["negative"],
+        fprompt=resolved_prompts["face"],
         hprompt=resolved_prompts["hair"],
         eprompt=resolved_prompts["eyes"],
     )
@@ -129,6 +131,13 @@ class UI:
         with gr.Accordion("Custom Character", open=False):
             with gr.Row():
                 with gr.Column():
+                    self.face_prompt = gr.Textbox(
+                        label="Face Prompt",
+                        lines=4,
+                        placeholder="Enter face prompt here...",
+                        interactive=True,
+                        elem_classes=["attention-editable"],
+                    )
                     self.hair_prompt = gr.Textbox(
                         label="Hair Prompt",
                         lines=4,
@@ -242,6 +251,7 @@ class UI:
             self.on_character_change,
             inputs=[self.character],
             outputs=[
+                self.face_prompt,
                 self.hair_prompt,
                 self.eyes_prompt,
                 self.face_image,
@@ -278,6 +288,7 @@ class UI:
             self.cn_strength,
             self.style_image,
             self.style_strength,
+            self.face_prompt,
             self.hair_prompt,
             self.eyes_prompt,
             self.face_image,
@@ -366,6 +377,7 @@ class UI:
                 char_tuple[0],
                 char_tuple[1],
                 char_tuple[2],
+                char_tuple[3],
                 state.get("positive_prompt", ""),
                 state.get("negative_prompt", ""),
                 character,
@@ -407,16 +419,18 @@ class UI:
             return (
                 gr.update(value="", interactive=True),
                 gr.update(value="", interactive=True),
+                gr.update(value="", interactive=True),
                 gr.update(value=None, interactive=True),
                 gr.update(value=""),
             )
         else:
             char_key = character.lower()
             return (
+                gr.update(value=characters[char_key]["face"], interactive=False),
                 gr.update(value=characters[char_key]["hair"], interactive=False),
                 gr.update(value=characters[char_key]["eyes"], interactive=False),
                 gr.update(
-                    value=str(comfyui_input / characters[char_key]["face"]),
+                    value=str(comfyui_input / characters[char_key]["face-reference"]),
                     interactive=False,
                 ),
                 gr.update(value=make_character_description(character)),
@@ -451,6 +465,7 @@ class UI:
         cn_strength,
         style_image,
         style_strength,
+        face_prompt,
         hair_prompt,
         eyes_prompt,
         face_image,
@@ -477,6 +492,7 @@ class UI:
             cn_strength,
             style_image,
             style_strength,
+            face_prompt,
             hair_prompt,
             eyes_prompt,
             face_image,
