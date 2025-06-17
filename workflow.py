@@ -942,13 +942,13 @@ class CharacterWorkflow:
                 results.append((res, label))
 
         wf.queue()
-        [
-            res.task.add_preview_callback(self.generate_preview_callback())
-            for res, _ in results
-        ]
 
         for result, label in results:
+            callback = self.generate_preview_callback()
+            
+            result.task.add_preview_callback(callback)
             yield result.wait(), label
+            result.task.remove_preview_callback(callback)
 
     @staticmethod
     def cancel_current():
