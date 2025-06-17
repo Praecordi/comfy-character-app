@@ -460,13 +460,18 @@ class CharacterWorkflow:
         self,
         latent,
         scale,
-        pipe,
+        model,
+        positive,
+        negative,
         steps,
         cfg,
         denoise,
         num_iterations=1,
         seed_offset=0,
         optional_mask=None,
+        apply_cn=True,
+        cn_strength=0.5,
+        cn_limits=(0, 1),
     ):
         steps = expand_iterations_linear(steps, num_iterations)
         cfg = expand_iterations_linear(cfg, num_iterations)
@@ -474,18 +479,33 @@ class CharacterWorkflow:
         ratio = scale ** (1 / num_iterations)
 
         for i in range(num_iterations):
+            if apply_cn:
+                positive, negative = ControlNetApplyAdvanced(
+                    positive=positive,
+                    negative=negative,
+                    control_net=self.cn,
+                    image=VAEDecode(latent, self.main_vae),
+                    strength=cn_strength,
+                    start_percent=cn_limits[0],
+                    end_percent=cn_limits[1],
+                    vae=self.main_vae,
+                )
+
             latent = NNLatentUpscale(latent, "SDXL", ratio)
             if optional_mask is not None:
                 latent = SetLatentNoiseMask(latent, optional_mask)
-            _, latent, _ = ImpactKSamplerBasicPipe(
-                pipe,
-                latent_image=latent,
+
+            latent = KSampler(
+                model=model,
                 seed=self.base_seed + seed_offset,
                 steps=steps[i],
                 cfg=cfg[i],
                 denoise=denoise[i],
                 sampler_name=self.sampler,
                 scheduler=self.scheduler,
+                positive=positive,
+                negative=negative,
+                latent_image=latent,
             )
 
         return latent
@@ -494,7 +514,9 @@ class CharacterWorkflow:
         self,
         image,
         scale,
-        pipe,
+        model,
+        positive,
+        negative,
         steps,
         cfg,
         denoise,
@@ -502,6 +524,9 @@ class CharacterWorkflow:
         seed_offset=0,
         optional_mask=None,
         sharpen=0.8,
+        apply_cn=True,
+        cn_strength=0.5,
+        cn_limits=(0, 1),
     ):
         steps = expand_iterations_linear(
             steps, num_iterations, callback=lambda x: int(x)
@@ -515,6 +540,18 @@ class CharacterWorkflow:
         ratio = scale ** (1 / num_iterations)
 
         for i in range(num_iterations):
+            if apply_cn:
+                positive, negative = ControlNetApplyAdvanced(
+                    positive=positive,
+                    negative=negative,
+                    control_net=self.cn,
+                    image=image,
+                    strength=cn_strength,
+                    start_percent=cn_limits[0],
+                    end_percent=cn_limits[1],
+                    vae=self.main_vae,
+                )
+
             image, _ = CRUpscaleImage(
                 image,
                 self.upscale_model_name,
@@ -528,15 +565,18 @@ class CharacterWorkflow:
             latent = VAEEncode(image, self.main_vae)
             if optional_mask is not None:
                 latent = SetLatentNoiseMask(latent, optional_mask)
-            _, latent, _ = ImpactKSamplerBasicPipe(
-                pipe,
-                latent_image=latent,
+
+            latent = KSampler(
+                model=model,
                 seed=self.base_seed + seed_offset,
                 steps=steps[i],
                 cfg=cfg[i],
                 denoise=denoise[i],
                 sampler_name=self.sampler,
                 scheduler=self.scheduler,
+                positive=positive,
+                negative=negative,
+                latent_image=latent,
             )
             image = VAEDecode(latent, self.main_vae)
 
@@ -588,17 +628,6 @@ class CharacterWorkflow:
 
     @gen_step(label="Latent Upscale", order=1)
     def latent_upscale(self, latent, image):
-        positive, negative = ControlNetApplyAdvanced(
-            self.pos_condition,
-            self.neg_condition,
-            control_net=self.cn,
-            image=image,
-            strength=0.3,
-            start_percent=0,
-            end_percent=1,
-            vae=self.main_vae,
-        )
-
         if not self.style_image is None:
             model, ipadapter = IPAdapterUnifiedLoader(
                 self.main_model, IPAdapterUnifiedLoader.preset.STANDARD_medium_strength
@@ -621,19 +650,19 @@ class CharacterWorkflow:
         else:
             model = self.main_model
 
-        main_pipe = ToBasicPipe(
-            model, self.main_clip, self.main_vae, positive, negative
-        )
-
         latent = self._iterative_latent_upscale(
             latent=latent,
             scale=1.6,
-            pipe=main_pipe,
+            model=model,
+            positive=self.pos_condition,
+            negative=self.neg_condition,
             steps=self.steps["latent_upscale"],
             cfg=self._scale_cfg(self.cfg["latent_upscale"]),
             denoise=(0.8, 0.6),
             num_iterations=3,
             seed_offset=1,
+            apply_cn=True,
+            cn_strength=0.3,
         )
 
         image = VAEDecode(latent, self.main_vae)
@@ -672,16 +701,6 @@ class CharacterWorkflow:
 
         positive = ConditioningConcat(self.face_condition, self.pos_condition)
 
-        positive, negative = ControlNetApplyAdvanced(
-            positive,
-            ConditioningZeroOut(self.neg_condition),
-            control_net=self.cn,
-            image=cropped_image,
-            strength=0.5,
-            start_percent=0,
-            end_percent=0.5,
-            vae=self.main_vae,
-        )
         model, positive, negative = ApplyInstantIDAdvanced(
             instantid=self.instantid,
             insightface=self.faceanalysis,
@@ -689,7 +708,7 @@ class CharacterWorkflow:
             image=self.face_image,
             model=self.main_model,
             positive=positive,
-            negative=negative,
+            negative=ConditioningZeroOut(self.neg_condition),
             ip_weight=0.9,
             cn_strength=0.3,
             start_at=0,
@@ -700,17 +719,15 @@ class CharacterWorkflow:
         )
         model = DifferentialDiffusion(model)
 
-        instantid_pipe = ToBasicPipe(
-            model, self.main_clip, self.main_vae, positive, negative
-        )
-
         latent_mask = GrowMask(cropped_mask, 50, True)
         latent_mask = MaskBlur(latent_mask, 70, "auto")
 
         cropped_image = self._iterative_image_upscale(
             image=cropped_image,
             scale=1.6,
-            pipe=instantid_pipe,
+            model=model,
+            positive=positive,
+            negative=negative,
             steps=self.steps["detail_face"],
             cfg=self._scale_cfg(self.cfg["detail_face"]),
             denoise=(0.7, 0.6),
@@ -718,6 +735,9 @@ class CharacterWorkflow:
             seed_offset=2,
             optional_mask=latent_mask,
             sharpen=0,
+            apply_cn=True,
+            cn_strength=0.5,
+            cn_limits=(0, 0.5),
         )
 
         cropped_image, _, _ = ImageResize_(
@@ -758,21 +778,7 @@ class CharacterWorkflow:
             resize_width=1024,
         )
 
-        positive, negative = ControlNetApplyAdvanced(
-            self.hair_condition,
-            ConditioningZeroOut(self.neg_condition),
-            control_net=self.cn,
-            image=cropped_image,
-            strength=0.5,
-            start_percent=0,
-            end_percent=1,
-            vae=self.main_vae,
-        )
         model = DifferentialDiffusion(self.main_model)
-
-        main_pipe = ToBasicPipe(
-            model, self.main_clip, self.main_vae, positive, negative
-        )
 
         cropped_mask = GrowMask(cropped_mask, 30, True)
         cropped_mask = MaskBlur(cropped_mask, 70, "auto")
@@ -781,13 +787,17 @@ class CharacterWorkflow:
         cropped_latent = self._iterative_latent_upscale(
             latent=cropped_latent,
             scale=1.6,
-            pipe=main_pipe,
+            model=model,
+            positive=self.hair_condition,
+            negative=ConditioningZeroOut(self.neg_condition),
             steps=self.steps["detail_hair"],
             cfg=self._scale_cfg(self.cfg["detail_hair"]),
             denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=3,
             optional_mask=cropped_mask,
+            apply_cn=True,
+            cn_strength=0.5,
         )
 
         cropped_image = VAEDecode(cropped_latent, self.main_vae)
@@ -832,21 +842,7 @@ class CharacterWorkflow:
             resize_width=1024,
         )
 
-        positive, negative = ControlNetApplyAdvanced(
-            self.eyes_condition,
-            ConditioningZeroOut(self.neg_condition),
-            control_net=self.cn,
-            image=cropped_image,
-            strength=0.5,
-            start_percent=0,
-            end_percent=1,
-            vae=self.main_vae,
-        )
         model = DifferentialDiffusion(self.main_model)
-
-        main_pipe = ToBasicPipe(
-            model, self.main_clip, self.main_vae, positive, negative
-        )
 
         latent_mask = GrowMask(cropped_mask, 20, True)
         latent_mask = MaskBlur(latent_mask, 50, "auto")
@@ -855,13 +851,17 @@ class CharacterWorkflow:
         cropped_latent = self._iterative_latent_upscale(
             latent=cropped_latent,
             scale=2,
-            pipe=main_pipe,
+            model=model,
+            positive=self.eyes_condition,
+            negative=ConditioningZeroOut(self.neg_condition),
             steps=self.steps["detail_eyes"],
             cfg=self._scale_cfg(self.cfg["detail_eyes"]),
             denoise=(0.6, 0.5),
             num_iterations=2,
             seed_offset=4,
             optional_mask=cropped_mask,
+            apply_cn=True,
+            cn_strength=0.5,
         )
 
         cropped_image = VAEDecode(cropped_latent, self.main_vae)
@@ -881,30 +881,21 @@ class CharacterWorkflow:
         positive = ConditioningConcat(self.pos_condition, self.eyes_condition)
         positive = ConditioningConcat(positive, self.face_condition)
         positive = ConditioningConcat(positive, self.hair_condition)
-        positive, negative = ControlNetApplyAdvanced(
-            positive,
-            self.neg_condition,
-            control_net=self.cn,
-            image=image,
-            strength=0.8,
-            start_percent=0,
-            end_percent=1,
-            vae=self.main_vae,
-        )
-        main_pipe = ToBasicPipe(
-            self.main_model, self.main_clip, self.main_vae, positive, negative
-        )
 
         image = self._iterative_image_upscale(
             image=image,
             scale=1.3,
-            pipe=main_pipe,
+            model=self.main_model,
+            positive=positive,
+            negative=self.neg_condition,
             steps=self.steps["image_upscale"],
             cfg=self._scale_cfg(self.cfg["image_upscale"]),
             denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=5,
             sharpen=0.4,
+            apply_cn=True,
+            cn_strength=0.8,
         )
         # skin_model = UpscaleModelLoader(UpscaleModels._1x_ITF_SkinDiffDetail_Lite_v1)
         # image = ImageUpscaleWithModel(skin_model, image)
