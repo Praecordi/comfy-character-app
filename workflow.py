@@ -133,11 +133,11 @@ class CharacterWorkflow:
             }
             self.cfg = {
                 "base_gen": 2,
-                "latent_upscale": (1, 2),
+                "latent_upscale": (2.5, 1.5),
                 "detail_face": 1.5,
-                "detail_hair": (1.5, 2),
-                "detail_eyes": (1.5, 2),
-                "image_upscale": (2, 2.5),
+                "detail_hair": (2, 1.5),
+                "detail_eyes": (2, 1.5),
+                "image_upscale": (2, 1.5),
             }
         elif "Hyper4S" in checkpoint:
             self.sampler = Samplers.dpmpp_2s_ancestral
@@ -152,11 +152,11 @@ class CharacterWorkflow:
             }
             self.cfg = {
                 "base_gen": 2,
-                "latent_upscale": (1, 2),
+                "latent_upscale": (2.5, 1.5),
                 "detail_face": 1.5,
-                "detail_hair": (1.5, 2),
-                "detail_eyes": (1.5, 2),
-                "image_upscale": (2, 2.5),
+                "detail_hair": (2, 1.5),
+                "detail_eyes": (2, 1.5),
+                "image_upscale": (2, 1.5),
             }
         elif "Hyper8S" in checkpoint:
             self.sampler = Samplers.dpmpp_2s_ancestral
@@ -171,11 +171,11 @@ class CharacterWorkflow:
             }
             self.cfg = {
                 "base_gen": 2,
-                "latent_upscale": (1, 2),
+                "latent_upscale": (2.5, 1.5),
                 "detail_face": 1.5,
-                "detail_hair": (1.5, 2),
-                "detail_eyes": (1.5, 2),
-                "image_upscale": (2, 2.5),
+                "detail_hair": (2, 1.5),
+                "detail_eyes": (2, 1.5),
+                "image_upscale": (2, 1.5),
             }
         elif "Turbo" in checkpoint:
             self.sampler = Samplers.dpmpp_2s_ancestral
@@ -190,11 +190,11 @@ class CharacterWorkflow:
             }
             self.cfg = {
                 "base_gen": 2,
-                "latent_upscale": (1, 2),
+                "latent_upscale": (2.5, 1.5),
                 "detail_face": 1.5,
-                "detail_hair": (1.5, 2),
-                "detail_eyes": (1.5, 2),
-                "image_upscale": (2, 2.5),
+                "detail_hair": (2, 1.5),
+                "detail_eyes": (2, 1.5),
+                "image_upscale": (2, 1.5),
             }
         else:
             if (
@@ -234,11 +234,11 @@ class CharacterWorkflow:
                 }
                 self.cfg = {
                     "base_gen": 2,
-                    "latent_upscale": (1, 2),
+                    "latent_upscale": (2.5, 1.5),
                     "detail_face": 1.5,
-                    "detail_hair": (1.5, 2),
-                    "detail_eyes": (1.5, 2),
-                    "image_upscale": (2, 2.5),
+                    "detail_hair": (2, 1.5),
+                    "detail_eyes": (2, 1.5),
+                    "image_upscale": (2, 1.5),
                 }
             else:
                 self.sampler = Samplers.dpmpp_2m_sde_gpu
@@ -253,11 +253,11 @@ class CharacterWorkflow:
                 }
                 self.cfg = {
                     "base_gen": 8,
-                    "latent_upscale": (4, 6),
+                    "latent_upscale": (10, 4),
                     "detail_face": 4,
-                    "detail_hair": (6, 8),
-                    "detail_eyes": (6, 8),
-                    "image_upscale": (8, 10),
+                    "detail_hair": (8, 6),
+                    "detail_eyes": (6, 4),
+                    "image_upscale": (8, 6),
                 }
 
         self.upscale_model_name = upscaler
@@ -490,7 +490,9 @@ class CharacterWorkflow:
                 rescale_factor=ratio,
                 resampling_method="lanczos",
             )
-            image = ImageCASharpening(image, sharpen)
+            if sharpen > 0:
+                image = ImageCASharpening(image, sharpen)
+
             latent = VAEEncode(image, self.main_vae)
             if optional_mask is not None:
                 latent = SetLatentNoiseMask(latent, optional_mask)
@@ -620,10 +622,10 @@ class CharacterWorkflow:
             right_pupil=False,
         )
 
-        segs = BboxDetectorSEGS(bbox_detector, image, 0.5, 30, 2, 10)
+        segs = BboxDetectorSEGS(bbox_detector, image, 0.5, 30, 3, 10)
         # segs = SegmDetectorSEGS(segm_detector, image, 0.5, 30, 2, 10)
         mask = SegsToCombinedMask(segs)
-        segs = MaskToSEGS(mask, False, 2, False, 10, True)
+        segs = MaskToSEGS(mask, False, 3, False, 10, True)
         segs = SetDefaultImageForSEGS(segs, image, True)
         segs_header, seg_elt = ImpactDecomposeSEGS(segs)
         seg_elt, cropped_image, cropped_mask, _, _, _, _, _ = ImpactFromSEGELT(seg_elt)
@@ -643,7 +645,7 @@ class CharacterWorkflow:
             image=cropped_image,
             strength=0.5,
             start_percent=0,
-            end_percent=1,
+            end_percent=0.5,
             vae=self.main_vae,
         )
         model, positive, negative = ApplyInstantIDAdvanced(
@@ -654,8 +656,8 @@ class CharacterWorkflow:
             model=self.main_model,
             positive=positive,
             negative=negative,
-            ip_weight=0.7,
-            cn_strength=0.5,
+            ip_weight=0.9,
+            cn_strength=0.3,
             start_at=0,
             end_at=1,
             noise=0,
@@ -677,11 +679,11 @@ class CharacterWorkflow:
             pipe=instantid_pipe,
             steps=self.steps["detail_face"],
             cfg=self._scale_cfg(self.cfg["detail_face"]),
-            denoise=(0.4, 0.2),
+            denoise=(0.7, 0.6),
             num_iterations=3,
             seed_offset=2,
             optional_mask=latent_mask,
-            sharpen=0.6,
+            sharpen=0,
         )
 
         cropped_image, _, _ = ImageResize_(
@@ -740,7 +742,7 @@ class CharacterWorkflow:
             pipe=main_pipe,
             steps=self.steps["detail_hair"],
             cfg=self._scale_cfg(self.cfg["detail_hair"]),
-            denoise=(0.7, 0.5),
+            denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=3,
             optional_mask=cropped_mask,
@@ -814,7 +816,7 @@ class CharacterWorkflow:
             pipe=main_pipe,
             steps=self.steps["detail_eyes"],
             cfg=self._scale_cfg(self.cfg["detail_eyes"]),
-            denoise=(0.6, 0.4),
+            denoise=(0.6, 0.5),
             num_iterations=2,
             seed_offset=4,
             optional_mask=cropped_mask,
@@ -846,25 +848,8 @@ class CharacterWorkflow:
             end_percent=1,
             vae=self.main_vae,
         )
-        model, positive, negative = ApplyInstantIDAdvanced(
-            instantid=self.instantid,
-            insightface=self.faceanalysis,
-            control_net=self.instantid_cn,
-            image=self.face_image,
-            model=self.main_model,
-            positive=positive,
-            negative=negative,
-            ip_weight=0.5,
-            cn_strength=0.3,
-            start_at=0.4,
-            end_at=0.9,
-            noise=0,
-            combine_embeds="average",
-            image_kps=image,
-        )
-
         main_pipe = ToBasicPipe(
-            model, self.main_clip, self.main_vae, positive, negative
+            self.main_model, self.main_clip, self.main_vae, positive, negative
         )
 
         image = self._iterative_image_upscale(
@@ -922,7 +907,6 @@ class CharacterWorkflow:
             yield method, label
 
     def generate_preview_callback(self):
-
         def _preview_callback(task, node_id, image):
             if self.preview_callback:
                 self.preview_callback(image)
