@@ -61,6 +61,45 @@ def expand_iterations_geometric(value, n, callback=lambda x: x):
         raise ValueError("Provide a value of int/float or tuple of size 2 to expand")
 
 
+def generate_scaled_config(n, k):
+    base_steps = {
+        "base_gen": 30,
+        "latent_upscale": (20, 10),
+        "detail_face": 15,
+        "detail_hair": (15, 10),
+        "detail_eyes": (15, 10),
+        "image_upscale": (15, 10),
+    }
+    base_cfg = {
+        "base_gen": 8,
+        "latent_upscale": (10, 4),
+        "detail_face": 4,
+        "detail_hair": (6, 4),
+        "detail_eyes": (6, 4),
+        "image_upscale": (6, 4),
+    }
+
+    new_steps = {}
+    for key, val in base_steps.items():
+        if isinstance(val, tuple):
+            scaled_tuple = tuple(round(1 + (x - 1) * (n - 1) / 29) for x in val)
+            new_steps[key] = scaled_tuple
+        else:
+            scaled_val = round(1 + (val - 1) * (n - 1) / 29)
+            new_steps[key] = scaled_val
+
+    new_cfg = {}
+    for key, val in base_cfg.items():
+        if isinstance(val, tuple):
+            scaled_tuple = tuple(round(1 + (x - 1) * (k - 1) / 7, 2) for x in val)
+            new_cfg[key] = scaled_tuple
+        else:
+            scaled_val = round(1 + (val - 1) * (k - 1) / 7, 2)
+            new_cfg[key] = scaled_val
+
+    return new_steps, new_cfg
+
+
 class CharacterWorkflow:
     def __init__(
         self,
@@ -123,85 +162,21 @@ class CharacterWorkflow:
         if "Lightning" in checkpoint:
             self.sampler = Samplers.dpmpp_2s_ancestral
             self.scheduler = Schedulers.normal
-            self.steps = {
-                "base_gen": 6,
-                "latent_upscale": (6, 4),
-                "detail_face": 4,
-                "detail_hair": (6, 4),
-                "detail_eyes": (6, 4),
-                "image_upscale": (4, 2),
-            }
-            self.cfg = {
-                "base_gen": 2,
-                "latent_upscale": (2.5, 1.5),
-                "detail_face": 1.5,
-                "detail_hair": (2, 1.5),
-                "detail_eyes": (2, 1.5),
-                "image_upscale": (2, 1.5),
-            }
+            self.steps, self.cfg = generate_scaled_config(6, 2)
         elif "Hyper4S" in checkpoint:
             self.sampler = Samplers.dpmpp_2s_ancestral
             self.scheduler = Schedulers.normal
-            self.steps = {
-                "base_gen": 6,
-                "latent_upscale": (6, 4),
-                "detail_face": 6,
-                "detail_hair": (6, 4),
-                "detail_eyes": (6, 4),
-                "image_upscale": (4, 2),
-            }
-            self.cfg = {
-                "base_gen": 2,
-                "latent_upscale": (2.5, 1.5),
-                "detail_face": 1.5,
-                "detail_hair": (2, 1.5),
-                "detail_eyes": (2, 1.5),
-                "image_upscale": (2, 1.5),
-            }
+            self.steps, self.cfg = generate_scaled_config(6, 2)
         elif "Hyper8S" in checkpoint:
             self.sampler = Samplers.dpmpp_2s_ancestral
             self.scheduler = Schedulers.normal
-            self.steps = {
-                "base_gen": 10,
-                "latent_upscale": (8, 6),
-                "detail_face": 8,
-                "detail_hair": (8, 6),
-                "detail_eyes": (8, 6),
-                "image_upscale": (6, 4),
-            }
-            self.cfg = {
-                "base_gen": 2,
-                "latent_upscale": (2.5, 1.5),
-                "detail_face": 1.5,
-                "detail_hair": (2, 1.5),
-                "detail_eyes": (2, 1.5),
-                "image_upscale": (2, 1.5),
-            }
+            self.steps, self.cfg = generate_scaled_config(10, 2)
         elif "Turbo" in checkpoint:
             self.sampler = Samplers.dpmpp_2s_ancestral
             self.scheduler = Schedulers.normal
-            self.steps = {
-                "base_gen": 8,
-                "latent_upscale": (6, 4),
-                "detail_face": 6,
-                "detail_hair": (6, 4),
-                "detail_eyes": (6, 4),
-                "image_upscale": (4, 2),
-            }
-            self.cfg = {
-                "base_gen": 2,
-                "latent_upscale": (2.5, 1.5),
-                "detail_face": 1.5,
-                "detail_hair": (2, 1.5),
-                "detail_eyes": (2, 1.5),
-                "image_upscale": (2, 1.5),
-            }
+            self.steps, self.cfg = generate_scaled_config(8, 2)
         else:
-            if (
-                fewsteplora == "lcm"
-                or fewsteplora == "turbo"
-                or fewsteplora == "dpo_turbo"
-            ):
+            if fewsteplora in ["lcm", "turbo", "dpo_turbo"]:
                 if fewsteplora == "lcm":
                     self.main_model, self.main_clip = LoraLoader(
                         self.main_model, self.main_clip, app_constants["lcm_lora"], 1, 1
@@ -224,41 +199,11 @@ class CharacterWorkflow:
                     )
                 self.sampler = Samplers.lcm
                 self.scheduler = Schedulers.sgm_uniform
-                self.steps = {
-                    "base_gen": 8,
-                    "latent_upscale": (6, 4),
-                    "detail_face": 6,
-                    "detail_hair": (6, 4),
-                    "detail_eyes": (6, 4),
-                    "image_upscale": (6, 4),
-                }
-                self.cfg = {
-                    "base_gen": 2,
-                    "latent_upscale": (2.5, 1.5),
-                    "detail_face": 1.5,
-                    "detail_hair": (2, 1.5),
-                    "detail_eyes": (2, 1.5),
-                    "image_upscale": (2, 1.5),
-                }
+                self.steps, self.cfg = generate_scaled_config(8, 2)
             else:
                 self.sampler = Samplers.dpmpp_2m_sde_gpu
                 self.scheduler = Schedulers.karras
-                self.steps = {
-                    "base_gen": 30,
-                    "latent_upscale": (20, 10),
-                    "detail_face": 15,
-                    "detail_hair": (15, 10),
-                    "detail_eyes": (15, 10),
-                    "image_upscale": (15, 10),
-                }
-                self.cfg = {
-                    "base_gen": 8,
-                    "latent_upscale": (10, 4),
-                    "detail_face": 4,
-                    "detail_hair": (8, 6),
-                    "detail_eyes": (6, 4),
-                    "image_upscale": (8, 6),
-                }
+                self.steps, self.cfg = generate_scaled_config(30, 8)
 
         self.upscale_model_name = upscaler
         self.upscale_model = UpscaleModelLoader(self.upscale_model_name)
