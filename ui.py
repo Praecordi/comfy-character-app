@@ -2,7 +2,6 @@ from typing import List, Tuple
 import random
 
 import gradio as gr
-from comfy_script.runtime.data import ImageBatchResult
 import queue as std_queue
 from threading import Thread, Event
 
@@ -229,13 +228,6 @@ class UI:
             elem_classes=["attention-editable"],
         )
 
-        self._create_character_settings()
-
-        self.process_controller = gr.CheckboxGroup(
-            label="Process Controllers",
-            choices=CharacterWorkflow.get_steps(),
-        )
-
         with gr.Row():
             self.base_seed = gr.Number(
                 label="Base Seed",
@@ -246,6 +238,15 @@ class UI:
                 label="Perturb Seed",
                 precision=0,
             )
+
+        self._create_character_settings()
+
+        self.process_controller = gr.CheckboxGroup(
+            label="Process Controllers",
+            choices=CharacterWorkflow.get_steps(),
+        )
+
+        # self._create_additional_settings()
 
         with gr.Row():
             with gr.Column():

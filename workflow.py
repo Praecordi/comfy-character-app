@@ -482,6 +482,13 @@ class CharacterWorkflow:
         ratio = scale ** (1 / num_iterations)
 
         for i in range(num_iterations):
+            image, _ = CRUpscaleImage(
+                image,
+                self.upscale_model_name,
+                "rescale",
+                rescale_factor=ratio,
+                resampling_method="lanczos",
+            )
             if apply_cn:
                 positive, negative = ControlNetApplyAdvanced(
                     positive=positive,
@@ -494,13 +501,6 @@ class CharacterWorkflow:
                     vae=self.main_vae,
                 )
 
-            image, _ = CRUpscaleImage(
-                image,
-                self.upscale_model_name,
-                "rescale",
-                rescale_factor=ratio,
-                resampling_method="lanczos",
-            )
             if sharpen > 0:
                 image = ImageCASharpening(image, sharpen)
 
@@ -832,7 +832,7 @@ class CharacterWorkflow:
             negative=self.neg_condition,
             steps=self.steps["image_upscale"],
             cfg=self._scale_cfg(self.cfg["image_upscale"]),
-            denoise=(0.7, 0.6),
+            denoise=(0.6, 0.5),
             num_iterations=2,
             seed_offset=5,
             sharpen=0.4,
