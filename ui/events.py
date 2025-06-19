@@ -130,6 +130,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "hair_prompt",
         "eyes_prompt",
         "face_image",
+        "use_instantid",
         "positive_prompt",
         "negative_prompt",
         "character",
@@ -147,6 +148,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "controlnet_strength",
         "style_image",
         "style_strength",
+        "use_instantid",
         "positive_prompt",
         "negative_prompt",
     ]
@@ -197,6 +199,7 @@ def _bind_local_storage(
         "positive_prompt",
         "negative_prompt",
         "character",
+        "use_instantid",
     ]
     output_components = [
         "checkpoint",
@@ -215,6 +218,7 @@ def _bind_local_storage(
         "hair_prompt",
         "eyes_prompt",
         "face_image",
+        "use_instantid",
         "positive_prompt",
         "negative_prompt",
         "character",
@@ -255,6 +259,7 @@ def _bind_local_storage(
             char_tuple[1],
             char_tuple[2],
             char_tuple[3],
+            state.get("use_instantid", True),
             state.get("positive_prompt", ""),
             state.get("negative_prompt", ""),
             character,

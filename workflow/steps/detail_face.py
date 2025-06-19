@@ -68,22 +68,26 @@ class DetailFaceStep(WorkflowStep):
 
         positive = ConditioningConcat(ctx.face_conditioning, ctx.positive_conditioning)
 
-        model, positive, negative = ApplyInstantIDAdvanced(
-            instantid=ctx.instantid,
-            insightface=ctx.faceanalysis,
-            control_net=ctx.instantid_cn,
-            image=ctx.face_image,
-            model=ctx.model,
-            positive=positive,
-            negative=ctx.negative_conditioning,
-            ip_weight=0.9,
-            cn_strength=0.3,
-            start_at=0,
-            end_at=1,
-            noise=0,
-            combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
-            image_kps=cropped_image,
-        )
+        if ctx.use_instantid:
+            model, positive, negative = ApplyInstantIDAdvanced(
+                instantid=ctx.instantid,
+                insightface=ctx.faceanalysis,
+                control_net=ctx.instantid_cn,
+                image=ctx.face_image,
+                model=ctx.model,
+                positive=positive,
+                negative=ctx.negative_conditioning,
+                ip_weight=0.9,
+                cn_strength=0.3,
+                start_at=0,
+                end_at=1,
+                noise=0,
+                combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
+                image_kps=cropped_image,
+            )
+        else:
+            model, positive, negative = ctx.model, positive, ctx.negative_conditioning
+
         model = DifferentialDiffusion(model)
 
         cropped_mask = GrowMask(cropped_mask, expand=50)

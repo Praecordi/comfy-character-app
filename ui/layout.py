@@ -120,7 +120,7 @@ class MainLayout:
 
                 with gr.Column(scale=3):
                     with gr.Accordion("Custom Character", open=False):
-                        with gr.Row():
+                        with gr.Row(equal_height=True):
                             with gr.Column(scale=1):
                                 face_prompt = gr.Textbox(
                                     label="Face Prompt",
@@ -136,7 +136,6 @@ class MainLayout:
                                     interactive=True,
                                     elem_classes=["attention-editable"],
                                 )
-
                                 eyes_prompt = gr.Textbox(
                                     label="Eyes Prompt",
                                     lines=4,
@@ -145,16 +144,18 @@ class MainLayout:
                                     elem_classes=["attention-editable"],
                                 )
 
-                            face_image = gr.Image(
-                                label="Face Image",
-                                type="filepath",
-                                interactive=True,
-                                sources=["upload"],
-                                show_download_button=False,
-                                show_fullscreen_button=False,
-                                show_share_button=False,
-                                scale=3,
-                            )
+                            with gr.Column(scale=3):
+                                face_image = gr.Image(
+                                    label="Face Image",
+                                    type="filepath",
+                                    interactive=True,
+                                    sources=["upload"],
+                                    show_download_button=False,
+                                    show_fullscreen_button=False,
+                                    show_share_button=False,
+                                )
+                                use_instantid = gr.Checkbox(label="Use InstantID")
+
         return {
             "character": character,
             "character_description": character_description,
@@ -162,6 +163,7 @@ class MainLayout:
             "hair_prompt": hair_prompt,
             "eyes_prompt": eyes_prompt,
             "face_image": face_image,
+            "use_instantid": use_instantid,
         }
 
     @staticmethod

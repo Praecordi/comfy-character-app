@@ -55,7 +55,9 @@ class CharacterWorkflow:
         )
 
         self.ctx = self.ctx.update(
-            base_seed=ui_state["base_seed"], perturb_seed=ui_state["perturb_seed"]
+            base_seed=ui_state["base_seed"],
+            perturb_seed=ui_state["perturb_seed"],
+            use_instantid=ui_state["use_instantid"],
         )
 
     def _init_models(self, checkpoint, fewsteplora, resolution):
