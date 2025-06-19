@@ -58,13 +58,21 @@ class DetailFaceStep(WorkflowStep):
         seg_elt, cropped_image, cropped_mask, _, _, _, _, _ = ImpactFromSEGELT(seg_elt)
         width, height, _ = GetImageSize(cropped_image)
 
-        cropped_image, _ = CRUpscaleImage(
-            image=cropped_image,
-            upscale_model=ctx.upscale_model_name,
-            mode=CRUpscaleImage.mode.resize,
-            resize_width=1024,
-            resampling_method=CRUpscaleImage.resampling_method.lanczos,
-        )
+        if ctx.upscale_model:
+            cropped_image, _ = CRUpscaleImage(
+                image=cropped_image,
+                upscale_model=ctx.upscale_model_name,
+                mode=CRUpscaleImage.mode.resize,
+                resize_width=1024,
+                resampling_method=CRUpscaleImage.resampling_method.lanczos,
+            )
+        else:
+            cropped_image, _, _ = ImageResize_(
+                image=cropped_image,
+                width=1024,
+                interpolation=ImageResize_.interpolation.lanczos,
+                method=ImageResize_.method.keep_proportion,
+            )
 
         positive = ConditioningConcat(ctx.face_conditioning, ctx.positive_conditioning)
 
@@ -114,12 +122,12 @@ class DetailFaceStep(WorkflowStep):
 
         cropped_image = VAEDecode(cropped_latent, ctx.vae)
 
-        cropped_image = ImageResize(
+        cropped_image, _, _ = ImageResize_(
             image=cropped_image,
-            mode=ImageResize.mode.resize,
-            resampling=ImageResize.resampling.lanczos,
-            resize_width=width,
-            resize_height=height,
+            width=width,
+            height=height,
+            interpolation=ImageResize_.interpolation.lanczos,
+            method=ImageResize_.method.keep_proportion,
         )
 
         cropped_image = FaceRestoreCFWithModel(

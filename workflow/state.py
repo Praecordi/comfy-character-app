@@ -38,7 +38,7 @@ class WorkflowContext:
 
     cn: csn.ControlNet = field(default=None)
     upscale_model_name: str = field(default=None)
-    upscale_model: csn.UpscaleModel = field(default=None)
+    upscale_model: Optional[csn.UpscaleModel] = field(default=None)
 
     positive_prompt: str = field(default=None)
     negative_prompt: str = field(default=None)

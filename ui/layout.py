@@ -183,7 +183,7 @@ class MainLayout:
                 choices=resolutions,
             )
 
-            upscaler = gr.Dropdown(label="Upscaler", choices=upscalers)
+            upscaler = gr.Dropdown(label="Upscaler", choices=["None"] + upscalers)
 
             style_prompt = gr.Textbox(
                 label="Style Prompt",

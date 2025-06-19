@@ -28,19 +28,16 @@ class UI:
         ) as demo:
             gr.Markdown("# Character Generator")
 
-            self.components = MainLayout.create(self.checkpoints, self.resolutions, self.upscalers)
+            self.components = MainLayout.create(
+                self.checkpoints, self.resolutions, self.upscalers
+            )
 
             self.components["browser_state"] = gr.BrowserState(
                 storage_key="ccw-ui-state", secret="ccw-secret"
             )
 
             bind_events(
-                demo,
-                self.components,
-                self.runner,
-                self.checkpoints,
-                self.resolutions,
-                self.upscalers,
+                demo, self.components, self.runner, self.checkpoints, self.resolutions
             )
 
         return demo

@@ -82,6 +82,7 @@ class WorkflowStep(ABC):
         cn_strength=0.5,
         cn_limits=(0, 1),
     ):
+        ctx = self.ctx
         steps = expand_iterations_linear(steps, num_iterations)
         cfg = expand_iterations_linear(cfg, num_iterations)
         denoise = expand_iterations_linear(denoise, num_iterations)
@@ -92,12 +93,12 @@ class WorkflowStep(ABC):
                 cn_positive, cn_negative = csn.ControlNetApplyAdvanced(
                     positive=positive,
                     negative=negative,
-                    control_net=self.ctx.cn,
-                    image=csn.VAEDecode(latent, self.ctx.vae),
+                    control_net=ctx.cn,
+                    image=csn.VAEDecode(latent, ctx.vae),
                     strength=cn_strength,
                     start_percent=cn_limits[0],
                     end_percent=cn_limits[1],
-                    vae=self.ctx.vae,
+                    vae=ctx.vae,
                 )
 
             latent = csn.NNLatentUpscale(latent, "SDXL", ratio)
@@ -106,12 +107,12 @@ class WorkflowStep(ABC):
 
             latent = csn.KSampler(
                 model=model,
-                seed=self.ctx.base_seed + seed_offset,
+                seed=ctx.base_seed + seed_offset,
                 steps=steps[i],
                 cfg=cfg[i],
                 denoise=denoise[i],
-                sampler_name=self.ctx.sampler,
-                scheduler=self.ctx.scheduler,
+                sampler_name=ctx.sampler,
+                scheduler=ctx.scheduler,
                 positive=cn_positive,
                 negative=cn_negative,
                 latent_image=latent,
@@ -137,6 +138,7 @@ class WorkflowStep(ABC):
         cn_strength=0.5,
         cn_limits=(0, 1),
     ):
+        ctx = self.ctx
         steps = expand_iterations_linear(
             steps, num_iterations, callback=lambda x: int(x)
         )
@@ -153,41 +155,49 @@ class WorkflowStep(ABC):
                 cn_positive, cn_negative = csn.ControlNetApplyAdvanced(
                     positive=positive,
                     negative=negative,
-                    control_net=self.ctx.cn,
+                    control_net=ctx.cn,
                     image=image,
                     strength=cn_strength,
                     start_percent=cn_limits[0],
                     end_percent=cn_limits[1],
-                    vae=self.ctx.vae,
+                    vae=ctx.vae,
                 )
 
-            image, _ = csn.CRUpscaleImage(
-                image,
-                self.ctx.upscale_model_name,
-                "rescale",
-                rescale_factor=ratio,
-                resampling_method="lanczos",
-            )
+            if ctx.upscale_model:
+                image, _ = csn.CRUpscaleImage(
+                    image=image,
+                    upscale_model=ctx.upscale_model_name,
+                    mode=csn.CRUpscaleImage.mode.rescale,
+                    rescale_factor=ratio,
+                    resampling_method=csn.CRUpscaleImage.resampling_method.lanczos,
+                )
+            else:
+                image = csn.ImageScaleBy(
+                    image=image,
+                    upscale_method=csn.ImageScaleBy.upscale_method.lanczos,
+                    scale_by=ratio,
+                )
+
             if sharpen > 0:
                 image = csn.ImageCASharpening(image, sharpen)
 
-            latent = csn.VAEEncode(image, self.ctx.vae)
+            latent = csn.VAEEncode(image, ctx.vae)
             if optional_mask is not None:
                 latent = csn.SetLatentNoiseMask(latent, optional_mask)
 
             latent = csn.KSampler(
                 model=model,
-                seed=self.ctx.base_seed + seed_offset,
+                seed=ctx.base_seed + seed_offset,
                 steps=steps[i],
                 cfg=cfg[i],
                 denoise=denoise[i],
-                sampler_name=self.ctx.sampler,
-                scheduler=self.ctx.scheduler,
+                sampler_name=ctx.sampler,
+                scheduler=ctx.scheduler,
                 positive=cn_positive,
                 negative=cn_negative,
                 latent_image=latent,
             )
-            image = csn.VAEDecode(latent, self.ctx.vae)
+            image = csn.VAEDecode(latent, ctx.vae)
 
         return image
 

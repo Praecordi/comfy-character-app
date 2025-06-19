@@ -165,7 +165,10 @@ class CharacterWorkflow:
         )
 
         upscale_model_name = upscaler
-        upscale_model = csn.UpscaleModelLoader(model_name=upscale_model_name)
+        if not upscaler == "None":
+            upscale_model = csn.UpscaleModelLoader(model_name=upscale_model_name)
+        else:
+            upscale_model = None
 
         self.ctx = self.ctx.update(
             cn=cn, upscale_model_name=upscale_model_name, upscale_model=upscale_model

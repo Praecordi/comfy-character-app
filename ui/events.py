@@ -16,13 +16,12 @@ def bind_events(
     runner: WorkflowRunner,
     checkpoints,
     resolutions,
-    upscalers,
 ):
     _bind_character_change(components)
     _bind_checkpoint_change(components)
     _bind_image_triggers(components)
     _bind_buttons(components, runner)
-    _bind_local_storage(block, components, runner, checkpoints, resolutions, upscalers)
+    _bind_local_storage(block, components, runner, checkpoints, resolutions)
     _bind_preview_refresh(components, runner)
 
 
@@ -185,7 +184,6 @@ def _bind_local_storage(
     runner: WorkflowRunner,
     checkpoints,
     resolutions,
-    upscalers,
 ):
     persist_components = [
         "checkpoint",
@@ -246,7 +244,7 @@ def _bind_local_storage(
             checkpoint,
             fewsteplora,
             state.get("resolution", resolutions[0][1]),
-            state.get("upscaler", upscalers[0][1]),
+            state.get("upscaler", "None"),
             state.get("style_prompt", ""),
             state.get("process_controller", get_steps()),
             state.get("base_seed", -1),
