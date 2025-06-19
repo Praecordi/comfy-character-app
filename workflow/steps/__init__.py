@@ -105,16 +105,23 @@ class WorkflowStep(ABC):
             if optional_mask is not None:
                 latent = csn.SetLatentNoiseMask(latent, optional_mask)
 
-            latent = csn.KSampler(
+            base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
+            sigmas = csn.BasicScheduler(
                 model=model,
-                seed=ctx.base_seed + seed_offset,
+                scheduler=ctx.scheduler_name,
                 steps=steps[i],
-                cfg=cfg[i],
                 denoise=denoise[i],
-                sampler_name=ctx.sampler,
-                scheduler=ctx.scheduler,
-                positive=cn_positive,
-                negative=cn_negative,
+            )
+
+            guider = csn.CFGGuider(
+                model=model, positive=cn_positive, negative=cn_negative, cfg=cfg[i]
+            )
+
+            latent, _ = csn.SamplerCustomAdvanced(
+                noise=base_noise,
+                guider=guider,
+                sampler=ctx.sampler,
+                sigmas=sigmas,
                 latent_image=latent,
             )
 
@@ -185,18 +192,27 @@ class WorkflowStep(ABC):
             if optional_mask is not None:
                 latent = csn.SetLatentNoiseMask(latent, optional_mask)
 
-            latent = csn.KSampler(
+            base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
+
+            sigmas = csn.BasicScheduler(
                 model=model,
-                seed=ctx.base_seed + seed_offset,
+                scheduler=ctx.scheduler_name,
                 steps=steps[i],
-                cfg=cfg[i],
                 denoise=denoise[i],
-                sampler_name=ctx.sampler,
-                scheduler=ctx.scheduler,
-                positive=cn_positive,
-                negative=cn_negative,
+            )
+
+            guider = csn.CFGGuider(
+                model=model, positive=cn_positive, negative=cn_negative, cfg=cfg[i]
+            )
+
+            latent, _ = csn.SamplerCustomAdvanced(
+                noise=base_noise,
+                guider=guider,
+                sampler=ctx.sampler,
+                sigmas=sigmas,
                 latent_image=latent,
             )
+
             image = csn.VAEDecode(latent, ctx.vae)
 
         return image

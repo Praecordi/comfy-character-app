@@ -22,7 +22,7 @@ def bind_events(
     _bind_checkpoint_change(components)
     _bind_image_triggers(components)
     _bind_buttons(components, runner)
-    _bind_local_storage(block, components, runner, checkpoints, resolutions)
+    _bind_local_storage(block, components, checkpoints, resolutions)
     _bind_preview_refresh(components, runner)
 
 
@@ -119,6 +119,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "resolution",
         "upscaler",
         "style_prompt",
+        "use_detail_daemon",
         "process_controller",
         "base_seed",
         "perturb_seed",
@@ -141,6 +142,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "resolution",
         "upscaler",
         "style_prompt",
+        "use_detail_daemon",
         "process_controller",
         "base_seed",
         "perturb_seed",
@@ -182,7 +184,6 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
 def _bind_local_storage(
     block,
     components: Dict[str, gr.Component],
-    runner: WorkflowRunner,
     checkpoints,
     resolutions,
 ):
@@ -192,6 +193,7 @@ def _bind_local_storage(
         "resolution",
         "upscaler",
         "style_prompt",
+        "use_detail_daemon",
         "process_controller",
         "base_seed",
         "perturb_seed",
@@ -206,6 +208,7 @@ def _bind_local_storage(
         "resolution",
         "upscaler",
         "style_prompt",
+        "use_detail_daemon",
         "process_controller",
         "base_seed",
         "perturb_seed",
@@ -247,6 +250,7 @@ def _bind_local_storage(
             state.get("resolution", resolutions[0][1]),
             state.get("upscaler", "None"),
             state.get("style_prompt", ""),
+            state.get("use_detail_daemon", False),
             state.get("process_controller", get_steps()),
             state.get("base_seed", -1),
             state.get("perturb_seed", -1),

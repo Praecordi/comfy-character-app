@@ -34,7 +34,10 @@ class CharacterWorkflow:
 
         self.preview_callback = ui_state["preview_callback"]
         self._init_models(
-            ui_state["checkpoint"], ui_state["fewsteplora"], ui_state["resolution"]
+            ui_state["checkpoint"],
+            ui_state["fewsteplora"],
+            ui_state["resolution"],
+            ui_state["use_detail_daemon"],
         )
         self._init_style_adapter(ui_state["style_image"], ui_state["style_strength"])
         self._init_controlnet_and_upscale(ui_state["upscaler"])
@@ -60,23 +63,23 @@ class CharacterWorkflow:
             use_instantid=ui_state["use_instantid"],
         )
 
-    def _init_models(self, checkpoint, fewsteplora, resolution):
+    def _init_models(self, checkpoint, fewsteplora, resolution, use_detail_daemon):
         model, clip, vae = csn.CheckpointLoaderSimple(checkpoint)
         if "Lightning" in checkpoint:
-            sampler = csn.Samplers.dpmpp_2s_ancestral
-            scheduler = csn.Schedulers.normal
+            sampler_name = csn.Samplers.dpmpp_2s_ancestral
+            scheduler_name = csn.Schedulers.normal
             steps, cfg = self._generate_scaled_config(6, 2)
         elif "Hyper4S" in checkpoint:
-            sampler = csn.Samplers.dpmpp_2s_ancestral
-            scheduler = csn.Schedulers.normal
+            sampler_name = csn.Samplers.dpmpp_2s_ancestral
+            scheduler_name = csn.Schedulers.normal
             steps, cfg = self._generate_scaled_config(6, 2)
         elif "Hyper8S" in checkpoint:
-            sampler = csn.Samplers.dpmpp_2s_ancestral
-            scheduler = csn.Schedulers.normal
+            sampler_name = csn.Samplers.dpmpp_2s_ancestral
+            scheduler_name = csn.Schedulers.normal
             steps, cfg = self._generate_scaled_config(10, 2)
         elif "Turbo" in checkpoint:
-            sampler = csn.Samplers.dpmpp_2s_ancestral
-            scheduler = csn.Schedulers.normal
+            sampler_name = csn.Samplers.dpmpp_2s_ancestral
+            scheduler_name = csn.Schedulers.normal
             steps, cfg = self._generate_scaled_config(10, 2)
         else:
             if fewsteplora in ["lcm", "turbo", "dpo_turbo"]:
@@ -92,13 +95,29 @@ class CharacterWorkflow:
                     strength_model=1,
                     strength_clip=1,
                 )
-                sampler = csn.Samplers.lcm
-                scheduler = csn.Schedulers.sgm_uniform
+                sampler_name = csn.Samplers.lcm
+                scheduler_name = csn.Schedulers.sgm_uniform
                 steps, cfg = self.generate_scaled_config(8, 2)
             else:
-                sampler = csn.Samplers.dpmpp_2m_sde_gpu
-                scheduler = csn.Schedulers.karras
+                sampler_name = csn.Samplers.dpmpp_2m_sde_gpu
+                scheduler_name = csn.Schedulers.karras
                 steps, cfg = self._generate_scaled_config(30, 8)
+
+        sampler = csn.KSamplerSelect(sampler_name)
+
+        if use_detail_daemon:
+            sampler = csn.DetailDaemonSamplerNode(
+                sampler=sampler,
+                detail_amount=0.15,
+                start=0.3,
+                end=0.7,
+                bias=0.5,
+                exponent=1,
+                start_offset=0,
+                end_offset=0,
+                fade=0,
+                smooth=True,
+            )
 
         instantid = csn.InstantIDModelLoader(
             instantid_file=app_constants["instantid_model"]
@@ -112,8 +131,9 @@ class CharacterWorkflow:
             model=model,
             clip=clip,
             vae=vae,
+            sampler_name=sampler_name,
+            scheduler_name=scheduler_name,
             sampler=sampler,
-            scheduler=scheduler,
             steps=steps,
             cfg=cfg,
             resolution=resolution,

@@ -192,6 +192,8 @@ class MainLayout:
                 interactive=True,
             )
 
+            use_detail_daemon = gr.Checkbox(label="Use Detail Daemon")
+
             with gr.Row():
                 with gr.Column():
                     cn_image = gr.Image(
@@ -229,6 +231,7 @@ class MainLayout:
             "resolution": resolution,
             "upscaler": upscaler,
             "style_prompt": style_prompt,
+            "use_detail_daemon": use_detail_daemon,
             "controlnet_image": cn_image,
             "controlnet_strength": cn_strength,
             "style_image": style_image,

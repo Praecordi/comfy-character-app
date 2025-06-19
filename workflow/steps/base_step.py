@@ -27,23 +27,33 @@ class BaseGenStep(WorkflowStep):
         else:
             positive, negative = ctx.positive_conditioning, ctx.negative_conditioning
 
+        base_noise = RandomNoise(ctx.base_seed)
         perturb_noise = RandomNoise(ctx.perturb_seed)
 
-        sigmas = BasicScheduler(ctx.model, ctx.scheduler, ctx.steps["base_gen"], 1)
+        sigmas = BasicScheduler(
+            model=ctx.model,
+            scheduler=ctx.scheduler_name,
+            steps=ctx.steps["base_gen"],
+            denoise=1,
+        )
         _, sigmas2 = SplitSigmas(sigmas, int(ctx.steps["base_gen"] * 0.65))
+
+        sampler = KSamplerSelect(ctx.sampler_name)
+
+        guider = CFGGuider(
+            model=ctx.model,
+            positive=positive,
+            negative=negative,
+            cfg=self._scale_cfg(ctx.cfg["base_gen"], scale_for_cn=True),
+        )
 
         latent = AddNoise(ctx.model, perturb_noise, sigmas2, latent)
 
-        latent = KSampler(
-            model=ctx.model,
-            seed=ctx.base_seed,
-            steps=ctx.steps["base_gen"],
-            cfg=self._scale_cfg(ctx.cfg["base_gen"], scale_for_cn=True),
-            denoise=1.0,
-            sampler_name=ctx.sampler,
-            scheduler=ctx.scheduler,
-            positive=positive,
-            negative=negative,
+        latent, _ = SamplerCustomAdvanced(
+            noise=base_noise,
+            guider=guider,
+            sampler=sampler,
+            sigmas=sigmas,
             latent_image=latent,
         )
 
