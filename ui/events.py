@@ -1,6 +1,7 @@
 from typing import Dict
 import gradio as gr
 
+from comfy_nodes import queue
 from constants import characters, comfyui_input
 
 from ui import PREVIEW_REFRESH_RATE
@@ -276,7 +277,7 @@ def _bind_local_storage(
         inputs=[components["browser_state"]],
         outputs=[components[x] for x in output_components],
     )
-    block.unload(lambda: runner.cancel_all())
+    block.unload(lambda: queue.cancel_all())
 
 
 def _bind_preview_refresh(components: Dict[str, gr.Component], runner: WorkflowRunner):

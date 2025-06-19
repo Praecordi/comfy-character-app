@@ -13,5 +13,6 @@ app_constants: Dict[str, str] = config["app_constants"]
 
 comfyui_input = comfyui_installation / "input"
 comfyui_output = comfyui_installation / "output"
+comfyui_temp = comfyui_installation / "temp"
 
 characters = OmegaConf.load(characters_config)
