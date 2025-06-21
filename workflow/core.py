@@ -54,13 +54,13 @@ class CharacterWorkflow:
         self._init_input_images(
             ui_state["controlnet_image"],
             ui_state["controlnet_strength"],
-            ui_state["face_image"],
+            ui_state["face_images"],
         )
 
         self.ctx = self.ctx.update(
             base_seed=ui_state["base_seed"],
             perturb_seed=ui_state["perturb_seed"],
-            use_instantid=ui_state["use_instantid"],
+            swap_method=ui_state["swap_method"],
         )
 
     def _init_models(self, checkpoint, fewsteplora, resolution, use_detail_daemon):
@@ -257,7 +257,7 @@ class CharacterWorkflow:
             eyes_conditioning=eyes_cond,
         )
 
-    def _init_input_images(self, cn_image, cn_strength, face_image):
+    def _init_input_images(self, cn_image, cn_strength, face_images):
         if cn_image is not None:
             cn_im, _ = csn.LoadImage(cn_image)
             cn_st = cn_strength
@@ -265,13 +265,17 @@ class CharacterWorkflow:
             cn_im = None
             cn_st = None
 
-        if face_image is not None:
-            face_im, _ = csn.LoadImage(face_image)
+        if face_images is not None:
+            face_img, _ = csn.LoadImage(face_images[0][0])
+            if len(face_images) > 1:
+                for i in range(1, len(face_images)):
+                    image, _ = csn.LoadImage(face_images[i][0])
+                    face_img = csn.ImageBatch(face_img, image)
         else:
-            face_im = None
+            face_img = None
 
         self.ctx = self.ctx.update(
-            cn_image=cn_im, cn_strength=cn_st, face_image=face_im
+            cn_image=cn_im, cn_strength=cn_st, face_image=face_img
         )
 
     def _generate_scaled_config(self, n, k):

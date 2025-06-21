@@ -10,7 +10,7 @@ class DetailFaceStep(WorkflowStep):
     usebbox = True
     applymask = True
 
-    def run(self, state: WorkflowState) -> WorkflowState:
+    def apply_face_sampling(self, state):
         ctx = self.ctx
 
         image = state.image
@@ -77,7 +77,7 @@ class DetailFaceStep(WorkflowStep):
 
         positive = ConditioningConcat(ctx.face_conditioning, ctx.positive_conditioning)
 
-        if ctx.use_instantid:
+        if ctx.swap_method == "instantid":
             model, positive, negative = ApplyInstantIDAdvanced(
                 instantid=ctx.instantid,
                 insightface=ctx.faceanalysis,
@@ -131,17 +131,60 @@ class DetailFaceStep(WorkflowStep):
             method=ImageResize_.method.keep_proportion,
         )
 
-        cropped_image = FaceRestoreCFWithModel(
-            FaceRestoreModelLoader(FaceRestoreModelLoader.model_name.codeformer_v0_1_0),
-            cropped_image,
-            FaceRestoreCFWithModel.facedetection.retinaface_resnet50,
-            0.5,
-        )
-
         seg_elt = ImpactEditSEGELT(seg_elt, cropped_image)
         segs = ImpactAssembleSEGS(segs_header, seg_elt)
         image = SEGSPaste(image, segs, 30, 255)
 
+        image = ReActorRestoreFace(
+            image,
+            ReActorRestoreFace.facedetection.retinaface_resnet50,
+            model=ReActorRestoreFace.model.codeformer_v0_1_0,
+            visibility=1,
+            codeformer_weight=0.5,
+        )
+
         latent = VAEEncode(image, ctx.vae)
 
         return state.update(latent=latent, image=image)
+
+    def apply_reactor(self, state):
+        ctx = self.ctx
+
+        image = state.image
+
+        face_model = ReActorBuildFaceModel(
+            False,
+            False,
+            "default",
+            ReActorBuildFaceModel.compute_method.Mean,
+            images=ctx.face_image,
+        )
+
+        booster = ReActorFaceBoost(
+            enabled=True,
+            boost_model=ReActorFaceBoost.boost_model.codeformer_v0_1_0,
+            interpolation=ReActorFaceBoost.interpolation.Lanczos,
+            visibility=1,
+            codeformer_weight=0.5,
+            restore_with_main_after=True,
+        )
+
+        image, _ = ReActorFaceSwap(
+            enabled=True,
+            input_image=image,
+            face_model=face_model,
+            face_boost=booster,
+            swap_model=ReActorFaceSwap.swap_model.inswapper_128_onnx,
+            facedetection=ReActorFaceSwap.facedetection.retinaface_resnet50,
+            face_restore_model=ReActorFaceSwap.face_restore_model.codeformer_v0_1_0,
+        )
+
+        latent = VAEDecode(image, ctx.vae)
+
+        return state.update(image=image, latent=latent)
+
+    def run(self, state: WorkflowState) -> WorkflowState:
+        if self.ctx.swap_method in ["instantid", "prompt"]:
+            return self.apply_face_sampling(state)
+        else:
+            return self.apply_reactor(state)

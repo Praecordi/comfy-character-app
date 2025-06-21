@@ -37,12 +37,20 @@ def on_character_change(character):
         )
     else:
         char_key = character.lower()
+        if isinstance(characters[char_key]["face-reference"], list):
+            reference = [
+                str(comfyui_input / ref)
+                for ref in characters[char_key]["face-reference"]
+            ]
+        else:
+            reference = [str(comfyui_input / characters[char_key]["face-reference"])]
+
         return (
             gr.update(value=characters[char_key]["face"], interactive=False),
             gr.update(value=characters[char_key]["hair"], interactive=False),
             gr.update(value=characters[char_key]["eyes"], interactive=False),
             gr.update(
-                value=str(comfyui_input / characters[char_key]["face-reference"]),
+                value=reference,
                 interactive=False,
             ),
             gr.update(value=make_character_description(character)),
@@ -70,7 +78,7 @@ def _bind_character_change(components: Dict[str, gr.Component]):
         "face_prompt",
         "hair_prompt",
         "eyes_prompt",
-        "face_image",
+        "face_images",
         "character_description",
     ]
 
@@ -130,8 +138,8 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "face_prompt",
         "hair_prompt",
         "eyes_prompt",
-        "face_image",
-        "use_instantid",
+        "face_images",
+        "swap_method",
         "positive_prompt",
         "negative_prompt",
         "character",
@@ -150,7 +158,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "controlnet_strength",
         "style_image",
         "style_strength",
-        "use_instantid",
+        "swap_method",
         "positive_prompt",
         "negative_prompt",
     ]
@@ -200,7 +208,7 @@ def _bind_local_storage(
         "positive_prompt",
         "negative_prompt",
         "character",
-        "use_instantid",
+        "swap_method",
     ]
     output_components = [
         "checkpoint",
@@ -219,8 +227,8 @@ def _bind_local_storage(
         "face_prompt",
         "hair_prompt",
         "eyes_prompt",
-        "face_image",
-        "use_instantid",
+        "face_images",
+        "swap_method",
         "positive_prompt",
         "negative_prompt",
         "character",
@@ -262,7 +270,7 @@ def _bind_local_storage(
             char_tuple[1],
             char_tuple[2],
             char_tuple[3],
-            state.get("use_instantid", True),
+            state.get("swap_method", "instantid"),
             state.get("positive_prompt", ""),
             state.get("negative_prompt", ""),
             character,

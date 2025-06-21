@@ -145,16 +145,22 @@ class MainLayout:
                                 )
 
                             with gr.Column(scale=3):
-                                face_image = gr.Image(
-                                    label="Face Image",
+                                face_images = gr.Gallery(
+                                    label="Face Images",
                                     type="filepath",
-                                    interactive=True,
-                                    sources=["upload"],
+                                    file_types=["image"],
                                     show_download_button=False,
                                     show_fullscreen_button=False,
                                     show_share_button=False,
                                 )
-                                use_instantid = gr.Checkbox(label="Use InstantID")
+                                swap_method = gr.Radio(
+                                    choices=[
+                                        ("Use InstantID", "instantid"),
+                                        ("Use ReActor", "reactor"),
+                                        ("Use Prompt Only", "prompt"),
+                                    ],
+                                    label="Face Swap method",
+                                )
 
         return {
             "character": character,
@@ -162,8 +168,8 @@ class MainLayout:
             "face_prompt": face_prompt,
             "hair_prompt": hair_prompt,
             "eyes_prompt": eyes_prompt,
-            "face_image": face_image,
-            "use_instantid": use_instantid,
+            "face_images": face_images,
+            "swap_method": swap_method,
         }
 
     @staticmethod

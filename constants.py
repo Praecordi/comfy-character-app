@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from omegaconf import OmegaConf
 from typing import Dict
 
 with open("config.json", encoding="utf-8") as f:
@@ -15,4 +14,5 @@ comfyui_input = comfyui_installation / "input"
 comfyui_output = comfyui_installation / "output"
 comfyui_temp = comfyui_installation / "temp"
 
-characters = OmegaConf.load(characters_config)
+with open(characters_config, encoding="utf-8") as f:
+    characters = json.load(f)

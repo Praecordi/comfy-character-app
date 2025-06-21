@@ -29,8 +29,8 @@ This project provides a Gradio-based interface for generating consistent charact
 - ComfyUI Essentials (https://github.com/cubiq/ComfyUI_essentials)
 - Comfyroll Studio (https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes)
 - ComfyUI Neural Network Latent Upscale (https://github.com/Ttl/ComfyUi_NNLatentUpscale)
-- Facerestore CF (https://github.com/mav-rik/facerestore_cf)
-- Detail Daemon (https://github.com/Jonseed/ComfyUI-Detail-Daemon)
+- ComfyUI ReActor (https://github.com/Gourieff/ComfyUI-ReActor/tree/main)
+- ComfyUI Detail Daemon (https://github.com/Jonseed/ComfyUI-Detail-Daemon)
 
 ## Installation
 

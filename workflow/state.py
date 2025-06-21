@@ -56,7 +56,7 @@ class WorkflowContext:
     instantid: csn.Instantid = field(default=None)
     faceanalysis: csn.Faceanalysis = field(default=None)
     instantid_cn: csn.ControlNet = field(default=None)
-    use_instantid: bool = field(default=None)
+    swap_method: str = field(default=None)
 
     def update(self, **kwargs) -> "WorkflowContext":
         for key, value in kwargs.items():
