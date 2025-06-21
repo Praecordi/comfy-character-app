@@ -70,6 +70,7 @@ class DetailFaceStep(WorkflowStep):
             cropped_image, _, _ = ImageResize_(
                 image=cropped_image,
                 width=1024,
+                height=2048,
                 interpolation=ImageResize_.interpolation.lanczos,
                 method=ImageResize_.method.keep_proportion,
             )

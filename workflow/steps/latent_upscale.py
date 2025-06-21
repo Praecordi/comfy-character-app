@@ -25,7 +25,7 @@ class LatentUpscaleStep(WorkflowStep):
             num_iterations=3,
             seed_offset=1,
             apply_cn=True,
-            cn_strength=0.3,
+            cn_strength=0.2,
         )
 
         image = VAEDecode(latent, ctx.vae)

@@ -108,11 +108,11 @@ class CharacterWorkflow:
         if use_detail_daemon:
             sampler = csn.DetailDaemonSamplerNode(
                 sampler=sampler,
-                detail_amount=0.15,
-                start=0.3,
-                end=0.7,
+                detail_amount=0.2,
+                start=0.4,
+                end=0.9,
                 bias=0.5,
-                exponent=1,
+                exponent=1.1,
                 start_offset=0,
                 end_offset=0,
                 fade=0,
