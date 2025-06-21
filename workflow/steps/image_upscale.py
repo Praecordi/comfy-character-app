@@ -37,7 +37,7 @@ class ImageUpscaleStep(WorkflowStep):
         else:
             model, positive, negative = ctx.model, positive, ctx.negative_conditioning
 
-        image = self._iterative_image_upscale(
+        upscaled = self._iterative_image_upscale(
             image=image,
             scale=1.3,
             model=model,
@@ -51,6 +51,13 @@ class ImageUpscaleStep(WorkflowStep):
             sharpen=0.4,
             apply_cn=True,
             cn_strength=0.9,
+        )
+
+        image = ImageColorMatch(
+            image=upscaled,
+            reference=image,
+            color_space=ImageColorMatch.color_space.RGB,
+            factor=0.75,
         )
 
         latent = VAEEncode(image, ctx.vae)

@@ -11,6 +11,7 @@ class LatentUpscaleStep(WorkflowStep):
     def run(self, state: WorkflowState) -> WorkflowState:
         ctx = self.ctx
 
+        image = state.image
         latent = state.latent
 
         latent = self._iterative_latent_upscale(
@@ -28,6 +29,15 @@ class LatentUpscaleStep(WorkflowStep):
             cn_strength=0.2,
         )
 
-        image = VAEDecode(latent, ctx.vae)
+        upscaled = VAEDecode(latent, ctx.vae)
+
+        image = ImageColorMatch(
+            image=upscaled,
+            reference=image,
+            color_space=ImageColorMatch.color_space.RGB,
+            factor=0.75,
+        )
+
+        latent = VAEEncode(image, ctx.vae)
 
         return state.update(latent=latent, image=image)

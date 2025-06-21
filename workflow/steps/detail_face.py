@@ -133,10 +133,17 @@ class DetailFaceStep(WorkflowStep):
 
         seg_elt = ImpactEditSEGELT(seg_elt, cropped_image)
         segs = ImpactAssembleSEGS(segs_header, seg_elt)
-        image = SEGSPaste(image, segs, 30, 255)
+        detailed = SEGSPaste(image, segs, 30, 255)
 
-        image = ReActorRestoreFace(
-            image,
+        image = ImageColorMatch(
+            image=detailed,
+            reference=image,
+            color_space=ImageColorMatch.color_space.RGB,
+            factor=0.75,
+        )
+
+        detailed = ReActorRestoreFace(
+            detailed,
             ReActorRestoreFace.facedetection.retinaface_resnet50,
             model=ReActorRestoreFace.model.codeformer_v0_1_0,
             visibility=1,
