@@ -37,13 +37,13 @@ def on_character_change(character):
         )
     else:
         char_key = character.lower()
-        if isinstance(characters[char_key]["face-reference"], list):
+        if isinstance(characters[char_key]["face_reference"], list):
             reference = [
                 str(comfyui_input / ref)
-                for ref in characters[char_key]["face-reference"]
+                for ref in characters[char_key]["face_reference"]
             ]
         else:
-            reference = [str(comfyui_input / characters[char_key]["face-reference"])]
+            reference = [str(comfyui_input / characters[char_key]["face_reference"])]
 
         return (
             gr.update(value=characters[char_key]["face"], interactive=False),

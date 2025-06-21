@@ -108,7 +108,7 @@ class WorkflowRunner:
                 copy_state["face_prompt"] = char_dict["face"]
                 copy_state["hair_prompt"] = char_dict["hair"]
                 copy_state["eyes_prompt"] = char_dict["eyes"]
-                copy_state["face_image"] = char_dict["face-reference"]
+                copy_state["face_images"] = char_dict["face_reference"]
                 copy_state["character"] = char_name
 
                 wf = CharacterWorkflow(copy_state)

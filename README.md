@@ -98,10 +98,11 @@ python main.py
 
 The JSON file defines all your characters. See `character.example.json` for a template. The required components for each character include:
 
+- `main_subject`: Defining characteristic: "warrior", "man", "woman", "eldritch monster"
 - `face_prompt`: Description of character's face
 - `hair_prompt`: Description of character's hair
 - `eyes_prompt`: Description of character's eyes
-- `face-reference`: Path to reference face image
+- `face_reference`: Path (or paths) to reference face image
 
 Additional attributes can be added which can then be used in the prompt template.
 

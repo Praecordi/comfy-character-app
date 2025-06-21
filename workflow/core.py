@@ -42,14 +42,14 @@ class CharacterWorkflow:
         self._init_style_adapter(ui_state["style_image"], ui_state["style_strength"])
         self._init_controlnet_and_upscale(ui_state["upscaler"])
         self._init_prompts(
-            ui_state["positive_prompt"],
-            ui_state["negative_prompt"],
-            ui_state["style_prompt"],
-            ui_state["face_prompt"],
-            ui_state["hair_prompt"],
-            ui_state["eyes_prompt"],
-            ui_state["character"],
-            ui_state["checkpoint"].startswith("pony"),
+            pos_prompt=ui_state["positive_prompt"],
+            neg_prompt=ui_state["negative_prompt"],
+            style_prompt=ui_state["style_prompt"],
+            face_prompt=ui_state["face_prompt"],
+            hair_prompt=ui_state["hair_prompt"],
+            eyes_prompt=ui_state["eyes_prompt"],
+            character=ui_state["character"],
+            apply_scores=ui_state["checkpoint"].startswith("pony"),
         )
         self._init_input_images(
             ui_state["controlnet_image"],
@@ -218,12 +218,14 @@ class CharacterWorkflow:
         pos = ", ".join(pos)
         neg = ", ".join(neg)
 
-        pos = substitute_character_tokens(pos, character)
-        neg = substitute_character_tokens(neg, character)
-
-        face = build_conditioning_prompt(face_prompt or "", style_prompt, apply_scores)
+        face = build_conditioning_prompt(
+            f"{{main_subject}}, {face_prompt}" or "", style_prompt, apply_scores
+        )
         hair = build_conditioning_prompt(hair_prompt or "", style_prompt, apply_scores)
         eyes = build_conditioning_prompt(eyes_prompt or "", style_prompt, apply_scores)
+
+        prompts = [pos, neg, face, hair, eyes]
+        conds = []
 
         def encode(text: str) -> csn.Conditioning:
             return csn.CLIPTextEncodeSDXL(
@@ -238,23 +240,21 @@ class CharacterWorkflow:
                 text_l=text,
             )
 
-        pos_cond = encode(pos)
-        neg_cond = encode(neg)
-        face_cond = encode(face)
-        hair_cond = encode(hair)
-        eyes_cond = encode(eyes)
+        for i in range(len(prompts)):
+            prompts[i] = substitute_character_tokens(prompts[i], character)
+            conds.append(encode(prompts[i]))
 
         self.ctx = self.ctx.update(
-            positive_prompt=pos,
-            negative_prompt=neg,
-            face_prompt=face,
-            hair_prompt=hair,
-            eyes_prompt=eyes,
-            positive_conditioning=pos_cond,
-            negative_conditioning=neg_cond,
-            face_conditioning=face_cond,
-            hair_conditioning=hair_cond,
-            eyes_conditioning=eyes_cond,
+            positive_prompt=prompts[0],
+            negative_prompt=prompts[1],
+            face_prompt=prompts[2],
+            hair_prompt=prompts[3],
+            eyes_prompt=prompts[4],
+            positive_conditioning=conds[0],
+            negative_conditioning=conds[1],
+            face_conditioning=conds[2],
+            hair_conditioning=conds[3],
+            eyes_conditioning=conds[4],
         )
 
     def _init_input_images(self, cn_image, cn_strength, face_images):
