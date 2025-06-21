@@ -50,6 +50,7 @@ class CharacterWorkflow:
             eyes_prompt=ui_state["eyes_prompt"],
             character=ui_state["character"],
             apply_scores=ui_state["checkpoint"].startswith("pony"),
+            apply_style=ui_state["enable_style"],
         )
         self._init_input_images(
             ui_state["controlnet_image"],
@@ -204,11 +205,12 @@ class CharacterWorkflow:
         eyes_prompt,
         character,
         apply_scores,
+        apply_style,
     ):
         pos = clean_prompt_string(pos_prompt)
         neg = clean_prompt_string(neg_prompt)
 
-        if style_prompt:
+        if apply_style and style_prompt:
             pos += clean_prompt_string(style_prompt)
 
         if apply_scores:
@@ -219,10 +221,16 @@ class CharacterWorkflow:
         neg = ", ".join(neg)
 
         face = build_conditioning_prompt(
-            f"{{main_subject}}, {face_prompt}" or "", style_prompt, apply_scores
+            f"{{main_subject}}, {face_prompt}" or "",
+            style_prompt if apply_style else None,
+            apply_scores,
         )
-        hair = build_conditioning_prompt(hair_prompt or "", style_prompt, apply_scores)
-        eyes = build_conditioning_prompt(eyes_prompt or "", style_prompt, apply_scores)
+        hair = build_conditioning_prompt(
+            hair_prompt or "", style_prompt if apply_style else None, apply_scores
+        )
+        eyes = build_conditioning_prompt(
+            eyes_prompt or "", style_prompt if apply_style else None, apply_scores
+        )
 
         prompts = [pos, neg, face, hair, eyes]
         conds = []

@@ -191,6 +191,8 @@ class MainLayout:
 
             upscaler = gr.Dropdown(label="Upscaler", choices=["None"] + upscalers)
 
+            enable_style = gr.Checkbox(label="Enable Style Prompt")
+
             style_prompt = gr.Textbox(
                 label="Style Prompt",
                 lines=4,
@@ -236,6 +238,7 @@ class MainLayout:
             "fewsteplora": fewsteplora,
             "resolution": resolution,
             "upscaler": upscaler,
+            "enable_style": enable_style,
             "style_prompt": style_prompt,
             "use_detail_daemon": use_detail_daemon,
             "controlnet_image": cn_image,
