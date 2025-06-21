@@ -146,7 +146,7 @@ class CharacterWorkflow:
     def _init_style_adapter(self, style_image, style_strength):
         if style_image is not None:
             s_image, _ = csn.LoadImage(style_image)
-            s_strength = style_strength
+            s_strength = style_strength / 100
 
             model, ipadapter = csn.IPAdapterUnifiedLoader(
                 model=self.ctx.model,
