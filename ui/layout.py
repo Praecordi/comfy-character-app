@@ -110,16 +110,29 @@ class MainLayout:
         ]
 
         with gr.Group():
-            with gr.Row():
+            gr.Markdown("Character Settings", container=True)
+            with gr.Row(equal_height=True):
                 with gr.Column(scale=1):
                     character = gr.Dropdown(
-                        label="Character", choices=character_choices, scale=2
+                        label="Character", choices=character_choices
                     )
+                with gr.Column(scale=3):
+                    swap_method = gr.Radio(
+                        choices=[
+                            ("Use InstantID", "instantid"),
+                            ("Use ReActor", "reactor"),
+                            ("Use Prompt Only", "prompt"),
+                        ],
+                        label="Face Swap method",
+                    )
+
+            with gr.Row(equal_height=True):
+                with gr.Column(scale=1):
                     with gr.Accordion(label="Available Keys", open=False):
                         character_description = gr.Markdown(padding=True)
 
                 with gr.Column(scale=3):
-                    with gr.Accordion("Custom Character", open=False):
+                    with gr.Accordion("Character Details", open=False):
                         with gr.Row(equal_height=True):
                             with gr.Column(scale=1):
                                 face_prompt = gr.Textbox(
@@ -153,14 +166,6 @@ class MainLayout:
                                     show_fullscreen_button=False,
                                     show_share_button=False,
                                 )
-                                swap_method = gr.Radio(
-                                    choices=[
-                                        ("Use InstantID", "instantid"),
-                                        ("Use ReActor", "reactor"),
-                                        ("Use Prompt Only", "prompt"),
-                                    ],
-                                    label="Face Swap method",
-                                )
 
         return {
             "character": character,
@@ -174,23 +179,26 @@ class MainLayout:
 
     @staticmethod
     def create_settings(checkpoints, resolutions, upscalers):
+        checkpoint = gr.Dropdown(
+            label="Checkpoint",
+            choices=checkpoints,
+        )
+
+        fewsteplora = gr.Radio(
+            label="Few Step LoRA", choices=["none", "lcm", "turbo", "dpo_turbo"]
+        )
+
+        resolution = gr.Dropdown(
+            label="Resolution",
+            choices=resolutions,
+        )
+
+        upscaler = gr.Dropdown(label="Upscaler", choices=["None"] + upscalers)
+
+        use_detail_daemon = gr.Checkbox(label="Use Detail Daemon")
+
         with gr.Group():
-            checkpoint = gr.Dropdown(
-                label="Checkpoint",
-                choices=checkpoints,
-            )
-
-            fewsteplora = gr.Radio(
-                label="Few Step LoRA", choices=["none", "lcm", "turbo", "dpo_turbo"]
-            )
-
-            resolution = gr.Dropdown(
-                label="Resolution",
-                choices=resolutions,
-            )
-
-            upscaler = gr.Dropdown(label="Upscaler", choices=["None"] + upscalers)
-
+            gr.Markdown("Control Net and Style Settings", container=True)
             enable_style = gr.Checkbox(label="Enable Style Prompt")
 
             style_prompt = gr.Textbox(
@@ -200,10 +208,8 @@ class MainLayout:
                 interactive=True,
             )
 
-            use_detail_daemon = gr.Checkbox(label="Use Detail Daemon")
-
             with gr.Row():
-                with gr.Column():
+                with gr.Accordion(label="Control Net Image", open=False):
                     cn_image = gr.Image(
                         label="Control Net Image",
                         type="filepath",
@@ -216,7 +222,7 @@ class MainLayout:
                         minimum=0, maximum=100, step=1, label="Control Net Strength"
                     )
 
-                with gr.Column():
+                with gr.Accordion(label="Style Image", open=False):
                     style_image = gr.Image(
                         label="Style Image",
                         type="filepath",
