@@ -301,7 +301,7 @@ def _bind_preview_refresh(components: Dict[str, gr.Component], runner: WorkflowR
     def get_preview():
         image, msg = runner.get_preview()
 
-        if msg == "reset":
+        if msg == "stopped":
             return components["preview"]
         else:
             if image:
