@@ -88,6 +88,7 @@ class WorkflowStep(ABC):
         denoise = expand_iterations_linear(denoise, num_iterations)
         ratio = scale ** (1 / num_iterations)
 
+        base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
         for i in range(num_iterations):
             if apply_cn:
                 cn_positive, cn_negative = csn.ControlNetApplyAdvanced(
@@ -105,7 +106,6 @@ class WorkflowStep(ABC):
             if optional_mask is not None:
                 latent = csn.SetLatentNoiseMask(latent, optional_mask)
 
-            base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
             sigmas = csn.BasicScheduler(
                 model=model,
                 scheduler=ctx.scheduler_name,

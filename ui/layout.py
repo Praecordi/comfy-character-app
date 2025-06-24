@@ -7,16 +7,18 @@ from workflow.steps import get_steps
 class MainLayout:
     @staticmethod
     def create_seeds():
-        with gr.Row():
-            base_seed = gr.Number(
-                label="Base Seed",
-                precision=0,
-            )
+        with gr.Group():
+            gr.Markdown("Seeds Panel", container=True)
+            with gr.Row():
+                base_seed = gr.Number(
+                    label="Base Seed",
+                    precision=0,
+                )
 
-            perturb_seed = gr.Number(
-                label="Perturb Seed",
-                precision=0,
-            )
+                perturb_seed = gr.Number(
+                    label="Perturb Seed",
+                    precision=0,
+                )
 
         return {"base_seed": base_seed, "perturb_seed": perturb_seed}
 
@@ -208,7 +210,7 @@ class MainLayout:
                 interactive=True,
             )
 
-            with gr.Row():
+            with gr.Row(equal_height=True):
                 with gr.Accordion(label="Control Net Image", open=False):
                     cn_image = gr.Image(
                         label="Control Net Image",
