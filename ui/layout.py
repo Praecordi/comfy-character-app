@@ -43,19 +43,12 @@ class MainLayout:
     @staticmethod
     def create_buttons():
         with gr.Row():
-            with gr.Column():
-                generate_btn = gr.Button("Generate")
-                generate_all_btn = gr.Button("Generate All")
-
-            with gr.Column():
-                interrupt_btn = gr.Button("Interrupt")
-                interrupt_all_btn = gr.Button("Interrupt All")
+            generate_btn = gr.Button("Generate", variant="primary")
+            interrupt_btn = gr.Button("Interrupt", variant="stop")
 
         return {
             "generate": generate_btn,
-            "generate_all": generate_all_btn,
             "interrupt": interrupt_btn,
-            "interrupt_all": interrupt_all_btn,
         }
 
     @staticmethod

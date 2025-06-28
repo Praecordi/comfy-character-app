@@ -145,50 +145,19 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "negative_prompt",
         "character",
     ]
-    generate_all_inputs = [
-        "checkpoint",
-        "fewsteplora",
-        "resolution",
-        "upscaler",
-        "enable_style",
-        "style_prompt",
-        "use_detail_daemon",
-        "process_controller",
-        "base_seed",
-        "perturb_seed",
-        "controlnet_image",
-        "controlnet_strength",
-        "style_image",
-        "style_strength",
-        "swap_method",
-        "positive_prompt",
-        "negative_prompt",
-    ]
-    common_outputs = ["output", "output_text"]
+    generate_outputs = ["output", "output_text"]
 
     def generate(*args):
         for res in runner.generate(dict(zip(generate_inputs, args))):
             yield res
 
-    def generate_all(*args):
-        for res in runner.generate_all(dict(zip(generate_all_inputs, args))):
-            yield res
-
     components["generate"].click(
         generate,
         inputs=[components[x] for x in generate_inputs],
-        outputs=[components[x] for x in common_outputs],
-    )
-
-    components["generate_all"].click(
-        generate_all,
-        inputs=[components[x] for x in generate_all_inputs],
-        outputs=[components[x] for x in common_outputs],
+        outputs=[components[x] for x in generate_outputs],
     )
 
     components["interrupt"].click(runner.interrupt)
-
-    components["interrupt_all"].click(runner.interrupt_all)
 
 
 def _bind_local_storage(

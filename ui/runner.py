@@ -74,77 +74,8 @@ class WorkflowRunner:
         finally:
             self._stop_preview_processor()
 
-    def generate_all(self, in_state: dict):
-        self._stop_wf = False
-        self._reset_queue()
-        self._start_preview_processor()
-
-        character_keys = [key for key in characters if key != "Custom"]
-        accumulated_images = []
-
-        in_state["base_seed"] = (
-            random.randint(0, 1e10)
-            if in_state["base_seed"] == -1
-            else in_state["base_seed"]
-        )
-        in_state["perturb_seed"] = (
-            random.randint(0, 1e10)
-            if in_state["perturb_seed"]
-            else in_state["perturb_seed"]
-        )
-        in_state["preview_callback"] = self._push
-
-        yield gr.update(value=accumulated_images), gr.update(
-            value="Starting batch generation for all characters..."
-        )
-
-        try:
-            for char_key in character_keys:
-                char_dict = characters[char_key]
-                char_name = char_key.capitalize()
-
-                copy_state = in_state.copy()
-
-                copy_state["face_prompt"] = char_dict["face"]
-                copy_state["hair_prompt"] = char_dict["hair"]
-                copy_state["eyes_prompt"] = char_dict["eyes"]
-                copy_state["face_images"] = char_dict["face_reference"]
-                copy_state["character"] = char_name
-
-                wf = CharacterWorkflow(copy_state)
-
-                for result, label in wf.generate(copy_state["process_controller"]):
-                    if self.stop_wf:
-                        raise InterruptedError("Workflow interrupted")
-
-                    if result is not None:
-                        image = result.wait()
-                        image_size = image[0].size
-                        label_str = (
-                            f"{char_name}: {label} ({image_size[0]} X {image_size[1]})"
-                        )
-                        accumulated_images.append((image[0], label_str))
-
-                    out_text = f"Generating: {char_name}\n" + make_output_text(wf.ctx)
-
-                    yield gr.update(value=accumulated_images), gr.update(value=out_text)
-        except InterruptedError:
-            yield gr.update(value=accumulated_images), gr.update(
-                value="Batch generation interrupted!"
-            )
-            self._stop_preview_processor()
-            return
-
-        yield gr.update(value=accumulated_images), gr.update(
-            value="Batch generation completed!"
-        )
-
     def interrupt(self):
         queue.cancel_current()
-
-    def interrupt_all(self):
-        queue.cancel_all()
-        self.stop_wf = True
 
     def get_preview(self):
         if self._stop_event.is_set():
