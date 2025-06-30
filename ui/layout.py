@@ -200,6 +200,7 @@ class MainLayout:
                 label="Style Prompt",
                 lines=4,
                 placeholder="Enter style prompt to append to positive prompt...",
+                elem_classes=["attention-editable"],
                 interactive=True,
             )
 
