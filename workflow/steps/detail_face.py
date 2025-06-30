@@ -176,7 +176,7 @@ class DetailFaceStep(WorkflowStep):
             restore_with_main_after=True,
         )
 
-        image, _ = ReActorFaceSwap(
+        image, _, _ = ReActorFaceSwap(
             enabled=True,
             input_image=image,
             face_model=face_model,
