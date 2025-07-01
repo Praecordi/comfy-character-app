@@ -40,7 +40,7 @@ class DetailHairStep(WorkflowStep):
         mask = SegsToCombinedMask(segs)
         segs = MaskToSEGS(
             mask=mask,
-            combined=False,
+            combined=True,
             crop_factor=2,
             bbox_fill=False,
             drop_size=10,
