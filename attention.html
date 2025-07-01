@@ -169,9 +169,74 @@
     inputField.dispatchEvent(inputEvent);
   }
 
-  if (document.readyState === "complete") {
-    setupAttentionEditing();
-  } else {
-    window.addEventListener("load", setupAttentionEditing);
+  function shortcuts(e) {
+    var event = document.all ? window.event : e;
+
+    switch (event.target.tagName.toLowerCase()) {
+      case "input":
+      case "textarea":
+        if (event.key.toLowerCase() == "escape") {
+          event.target.blur();
+        }
+        break;
+      default:
+        if (
+          event.key.toLowerCase() == "enter" &&
+          event.ctrlKey &&
+          !event.shiftKey
+        ) {
+          document.getElementById("generate-btn").click();
+        }
+        if (
+          event.key.toLowerCase() == "enter" &&
+          event.ctrlKey &&
+          event.shiftKey
+        ) {
+          document.getElementById("interrupt-btn").click();
+        }
+        if (event.key.toLowerCase() == "o" && event.altKey) {
+          document
+            .getElementById("output-acrdn")
+            .querySelector("button")
+            .click();
+        }
+        if (event.key.toLowerCase() == "c" && event.altKey) {
+          document.getElementById("cn-acrdn").querySelector("button").click();
+        }
+        if (event.key.toLowerCase() == "s" && event.altKey) {
+          document
+            .getElementById("style-acrdn")
+            .querySelector("button")
+            .click();
+        }
+        break;
+    }
   }
+
+  function setupOutputAccordion() {
+    const optButton = document
+      .getElementById("output-acrdn")
+      .querySelector("button");
+
+    optButton.addEventListener("click", () => {
+      setTimeout(() => {
+        const mediaButton = document
+          .getElementById("output-acrdn")
+          .querySelector(".media-button");
+        if (mediaButton) {
+          mediaButton.focus();
+        }
+      }, 10);
+    });
+  }
+
+  function loadSetup() {
+    setupAttentionEditing();
+    setupOutputAccordion();
+    document.addEventListener("keydown", shortcuts, false);
+  }
+
+  document.addEventListener("render", () => {
+    loadSetup();
+  });
 </script>

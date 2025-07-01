@@ -43,8 +43,12 @@ class MainLayout:
     @staticmethod
     def create_buttons():
         with gr.Row():
-            generate_btn = gr.Button("Generate", variant="primary")
-            interrupt_btn = gr.Button("Interrupt", variant="stop")
+            generate_btn = gr.Button(
+                "Generate (Ctrl-ENTER)", variant="primary", elem_id="generate-btn"
+            )
+            interrupt_btn = gr.Button(
+                "Interrupt (Ctrl-Shift-ENTER)", variant="stop", elem_id="interrupt-btn"
+            )
 
         return {
             "generate": generate_btn,
@@ -63,7 +67,7 @@ class MainLayout:
     @staticmethod
     def create_output_panel():
         with gr.Group():
-            with gr.Accordion("Output", open=False):
+            with gr.Accordion("Output (Alt-O)", open=False, elem_id="output-acrdn"):
                 with gr.Row(equal_height=True):
                     with gr.Column(scale=3):
                         output_gallery = gr.Gallery(
@@ -205,7 +209,9 @@ class MainLayout:
             )
 
             with gr.Row(equal_height=True):
-                with gr.Accordion(label="Control Net Image", open=False):
+                with gr.Accordion(
+                    label="Control Net Image (Alt-C)", open=False, elem_id="cn-acrdn"
+                ):
                     cn_image = gr.Image(
                         label="Control Net Image",
                         type="filepath",
@@ -218,7 +224,9 @@ class MainLayout:
                         minimum=0, maximum=100, step=1, label="Control Net Strength"
                     )
 
-                with gr.Accordion(label="Style Image", open=False):
+                with gr.Accordion(
+                    label="Style Image (Alt-S)", open=False, elem_id="style-acrdn"
+                ):
                     style_image = gr.Image(
                         label="Style Image",
                         type="filepath",
