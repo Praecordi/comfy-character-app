@@ -18,7 +18,6 @@ This project provides a Gradio-based interface for generating consistent charact
 - ComfyUI installation
 - Gradio
 - ComfyScript (See https://github.com/Chaoses-Ib/ComfyScript for installation)
-- OmegaConf
 
 ### Custom Nodes
 
