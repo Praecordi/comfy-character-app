@@ -70,7 +70,7 @@ class DetailHairStep(WorkflowStep):
             negative=ctx.negative_conditioning,
             steps=ctx.steps["detail_hair"],
             cfg=self._scale_cfg(ctx.cfg["detail_hair"]),
-            denoise=(0.8, 0.7),
+            denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=3,
             optional_mask=cropped_mask if self.applymask else None,
