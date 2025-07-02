@@ -1,8 +1,25 @@
 # Character Generation Workflow for ComfyUI with ComfyScript
 
+<div align="center">
+  <image src="./res/strip.webp" alt="Output Example">
+  <figcaption>Example of output for sample character.
+  
+  Base Image &rarr; Latent Upscale &rarr; Inpainting Steps (Face, Hair, Eyes) &rarr; Image Upscale &rarr; Remove Background</figcaption>
+</div>
+
 This project provides a Gradio-based interface for generating consistent character images using ComfyUI. It features a multi-step generation process with specialized controls for character attributes, style transfer, and detail enhancement.
 
 ## Key Features
+
+<div align="center">
+  <image src="./res/ui1.webp" alt="UI Screenshot with Preview">
+  <figcaption>Output UI with live preview pane</figcaption>
+</div>
+
+<div align="center">
+  <image src="./res/ui2.webp" alt="Output Example">
+  <figcaption>Available options for generation</figcaption>
+</div>
 
 - 🧑‍🎨 Character-focused generation workflow
 - 🎨 Style transfer with reference images
