@@ -27,7 +27,7 @@ class CharacterWorkflow:
             "base_gen": 8,
             "latent_upscale": (10, 4),
             "detail_face": 4,
-            "detail_hair": (6, 4),
+            "detail_hair": (7, 5),
             "detail_eyes": (6, 4),
             "image_upscale": (6, 4),
         }
@@ -128,6 +128,15 @@ class CharacterWorkflow:
             control_net_name=app_constants["instantid_controlnet"]
         )
 
+        sam_model = csn.SAMLoader(
+            csn.SAMLoader.model_name.sam_vit_h,
+            device_mode=csn.SAMLoader.device_mode.Prefer_GPU,
+        )
+
+        gd_model = csn.GroundingDinoModelLoaderSegmentAnything(
+            csn.GroundingDinoModelLoaderSegmentAnything.model_name.GroundingDINO_SwinB_938MB
+        )
+
         self.ctx = self.ctx.update(
             model=model,
             clip=clip,
@@ -141,6 +150,8 @@ class CharacterWorkflow:
             instantid=instantid,
             faceanalysis=faceanalysis,
             instantid_cn=instantid_cn,
+            sam_model=sam_model,
+            gd_model=gd_model,
         )
 
     def _init_style_adapter(self, style_image, style_strength):

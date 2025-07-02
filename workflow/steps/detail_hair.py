@@ -16,28 +16,15 @@ class DetailHairStep(WorkflowStep):
 
         image = state.image
 
-        bbox_detector, segm_detector = UltralyticsDetectorProvider(
-            app_constants["hair_seg_model"]
+        _, mask = GroundingDinoSAMSegmentSegmentAnything(
+            ctx.sam_model, ctx.gd_model, image, prompt="hair", threshold=0.5
         )
 
-        common_detector_settings = {
-            "image": image,
-            "threshold": 0.5,
-            "dilation": 30,
-            "crop_factor": 2,
-            "drop_size": 10,
-        }
-
         if self.usebbox:
-            segs = BboxDetectorSEGS(
-                bbox_detector=bbox_detector, **common_detector_settings
-            )
-        else:
-            segs = SegmDetectorSEGS(
-                segm_detector=segm_detector, **common_detector_settings
-            )
+            image_width, image_height, _ = GetImageSize(image)
+            _, _, x, y, width, height = MaskBoundingBox(mask)
+            mask = MaskRectAreaAdvanced(x, y, width, height, image_width, image_height)
 
-        mask = SegsToCombinedMask(segs)
         segs = MaskToSEGS(
             mask=mask,
             combined=True,
@@ -83,7 +70,7 @@ class DetailHairStep(WorkflowStep):
             negative=ctx.negative_conditioning,
             steps=ctx.steps["detail_hair"],
             cfg=self._scale_cfg(ctx.cfg["detail_hair"]),
-            denoise=(0.7, 0.6),
+            denoise=(0.8, 0.7),
             num_iterations=2,
             seed_offset=3,
             optional_mask=cropped_mask if self.applymask else None,

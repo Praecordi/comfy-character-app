@@ -15,36 +15,15 @@ class DetailEyesStep(WorkflowStep):
 
         image = state.image
 
-        bbox_detector, segm_detector = MediaPipeFaceMeshDetectorProviderInspire(
-            max_faces=1,
-            face=False,
-            mouth=False,
-            left_eyebrow=False,
-            left_eye=True,
-            left_pupil=False,
-            right_eyebrow=False,
-            right_eye=True,
-            right_pupil=False,
+        _, mask = GroundingDinoSAMSegmentSegmentAnything(
+            ctx.sam_model, ctx.gd_model, image, prompt="eye", threshold=0.5
         )
 
-        common_detector_settings = {
-            "image": image,
-            "threshold": 0.5,
-            "dilation": 30,
-            "crop_factor": 2,
-            "drop_size": 10,
-        }
-
         if self.usebbox:
-            segs = BboxDetectorSEGS(
-                bbox_detector=bbox_detector, **common_detector_settings
-            )
-        else:
-            segs = SegmDetectorSEGS(
-                segm_detector=segm_detector, **common_detector_settings
-            )
+            image_width, image_height, _ = GetImageSize(image)
+            _, _, x, y, width, height = MaskBoundingBox(mask)
+            mask = MaskRectAreaAdvanced(x, y, width, height, image_width, image_height)
 
-        mask = SegsToCombinedMask(segs)
         segs = MaskToSEGS(
             mask=mask,
             combined=True,

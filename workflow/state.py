@@ -28,6 +28,9 @@ class WorkflowContext:
     cfg: Dict[str, Union[int, float, Tuple]] = field(default=None)
     resolution: str = field(default=None)
 
+    sam_model: csn.SamModel = field(default=None)
+    gd_model: csn.GroundingDinoModel = field(default=None)
+
     base_seed: int = field(default=None)
     perturb_seed: int = field(default=None)
 
