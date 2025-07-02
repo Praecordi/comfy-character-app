@@ -44,6 +44,7 @@ class WorkflowContext:
     upscale_model_name: str = field(default=None)
     upscale_model: Optional[csn.UpscaleModel] = field(default=None)
 
+    input_image: Optional[csn.Image] = field(default=None)
     positive_prompt: str = field(default=None)
     negative_prompt: str = field(default=None)
     face_prompt: str = field(default=None)

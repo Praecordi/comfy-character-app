@@ -11,52 +11,61 @@ class BaseGenStep(WorkflowStep):
     def run(self, state: WorkflowState) -> WorkflowState:
         ctx = self.ctx
 
-        latent = state.latent
+        if ctx.input_image:
+            image = ctx.input_image
+            latent = VAEEncode(image, ctx.vae)
 
-        if not ctx.cn_image is None:
-            positive, negative = ControlNetApplyAdvanced(
-                ctx.positive_conditioning,
-                ctx.negative_conditioning,
-                ctx.cn,
-                ctx.cn_image,
-                ctx.cn_strength / 100,
-                0,
-                1,
-                ctx.vae,
-            )
+            return state.update(latent=latent, image=image)
         else:
-            positive, negative = ctx.positive_conditioning, ctx.negative_conditioning
+            latent = state.latent
 
-        base_noise = RandomNoise(ctx.base_seed)
-        perturb_noise = RandomNoise(ctx.perturb_seed)
+            if not ctx.cn_image is None:
+                positive, negative = ControlNetApplyAdvanced(
+                    ctx.positive_conditioning,
+                    ctx.negative_conditioning,
+                    ctx.cn,
+                    ctx.cn_image,
+                    ctx.cn_strength / 100,
+                    0,
+                    1,
+                    ctx.vae,
+                )
+            else:
+                positive, negative = (
+                    ctx.positive_conditioning,
+                    ctx.negative_conditioning,
+                )
 
-        sigmas = BasicScheduler(
-            model=ctx.model,
-            scheduler=ctx.scheduler_name,
-            steps=ctx.steps["base_gen"],
-            denoise=1,
-        )
-        _, sigmas2 = SplitSigmas(sigmas, int(ctx.steps["base_gen"] * 0.65))
+            base_noise = RandomNoise(ctx.base_seed)
+            perturb_noise = RandomNoise(ctx.perturb_seed)
 
-        sampler = KSamplerSelect(ctx.sampler_name)
+            sigmas = BasicScheduler(
+                model=ctx.model,
+                scheduler=ctx.scheduler_name,
+                steps=ctx.steps["base_gen"],
+                denoise=1,
+            )
+            _, sigmas2 = SplitSigmas(sigmas, int(ctx.steps["base_gen"] * 0.65))
 
-        guider = CFGGuider(
-            model=ctx.model,
-            positive=positive,
-            negative=negative,
-            cfg=self._scale_cfg(ctx.cfg["base_gen"], scale_for_cn=True),
-        )
+            sampler = KSamplerSelect(ctx.sampler_name)
 
-        latent = AddNoise(ctx.model, perturb_noise, sigmas2, latent)
+            guider = CFGGuider(
+                model=ctx.model,
+                positive=positive,
+                negative=negative,
+                cfg=self._scale_cfg(ctx.cfg["base_gen"], scale_for_cn=True),
+            )
 
-        latent, _ = SamplerCustomAdvanced(
-            noise=base_noise,
-            guider=guider,
-            sampler=sampler,
-            sigmas=sigmas,
-            latent_image=latent,
-        )
+            latent = AddNoise(ctx.model, perturb_noise, sigmas2, latent)
 
-        image = VAEDecode(latent, ctx.vae)
+            latent, _ = SamplerCustomAdvanced(
+                noise=base_noise,
+                guider=guider,
+                sampler=sampler,
+                sigmas=sigmas,
+                latent_image=latent,
+            )
 
-        return state.update(latent=latent, image=image)
+            image = VAEDecode(latent, ctx.vae)
+
+            return state.update(latent=latent, image=image)

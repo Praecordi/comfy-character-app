@@ -53,6 +53,7 @@ class CharacterWorkflow:
             apply_style=ui_state["enable_style"],
         )
         self._init_input_images(
+            ui_state["input_image"],
             ui_state["controlnet_image"],
             ui_state["controlnet_strength"],
             ui_state["face_images"],
@@ -276,7 +277,12 @@ class CharacterWorkflow:
             eyes_conditioning=conds[4],
         )
 
-    def _init_input_images(self, cn_image, cn_strength, face_images):
+    def _init_input_images(self, input_image, cn_image, cn_strength, face_images):
+        if input_image is not None:
+            opt_input, _ = csn.LoadImage(input_image)
+        else:
+            opt_input = None
+
         if cn_image is not None:
             cn_im, _ = csn.LoadImage(cn_image)
             cn_st = cn_strength
@@ -294,7 +300,10 @@ class CharacterWorkflow:
             face_img = None
 
         self.ctx = self.ctx.update(
-            cn_image=cn_im, cn_strength=cn_st, face_image=face_img
+            input_image=opt_input,
+            cn_image=cn_im,
+            cn_strength=cn_st,
+            face_image=face_img,
         )
 
     def _generate_scaled_config(self, n, k):
@@ -328,7 +337,7 @@ class CharacterWorkflow:
         for _, step in sorted(steps, key=lambda x: x[0]):
             yield step
 
-    def generate(self, controller) -> Iterator[Tuple[csn.Image, str]]:
+    def generate(self, controller: List[str]) -> Iterator[Tuple[csn.Image, str]]:
         results: List[Tuple[csn.Image, str]] = []
         with csn.Workflow(queue=False) as wf:
             _, _, _, _, _, latent, _ = csn.CRAspectRatio(

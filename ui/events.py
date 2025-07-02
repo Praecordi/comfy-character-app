@@ -122,6 +122,7 @@ def _bind_image_triggers(components: Dict[str, gr.Component]):
 
 def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     generate_inputs = [
+        "input_image",
         "checkpoint",
         "fewsteplora",
         "resolution",
@@ -167,6 +168,7 @@ def _bind_local_storage(
     resolutions,
 ):
     persist_components = [
+        "input_image",
         "checkpoint",
         "fewsteplora",
         "resolution",
@@ -183,6 +185,7 @@ def _bind_local_storage(
         "swap_method",
     ]
     output_components = [
+        "input_image",
         "checkpoint",
         "fewsteplora",
         "resolution",
@@ -226,6 +229,7 @@ def _bind_local_storage(
             else gr.update(value="none", interactive=not disable)
         )
         return [
+            state.get("input_image", None),
             checkpoint,
             fewsteplora,
             state.get("resolution", resolutions[0][1]),

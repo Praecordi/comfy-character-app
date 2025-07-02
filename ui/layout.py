@@ -178,6 +178,18 @@ class MainLayout:
 
     @staticmethod
     def create_settings(checkpoints, resolutions, upscalers):
+        with gr.Accordion(
+            label="Optional Input Image (Alt-I)", open=False, elem_id="input-acrdn"
+        ):
+            input_image = gr.Image(
+                label="Input Image",
+                type="filepath",
+                sources=["upload"],
+                show_download_button=False,
+                show_fullscreen_button=False,
+                show_share_button=False,
+            )
+
         checkpoint = gr.Dropdown(
             label="Checkpoint",
             choices=checkpoints,
@@ -244,6 +256,7 @@ class MainLayout:
                     )
 
         return {
+            "input_image": input_image,
             "checkpoint": checkpoint,
             "fewsteplora": fewsteplora,
             "resolution": resolution,
