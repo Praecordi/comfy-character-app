@@ -48,12 +48,14 @@ class WorkflowContext:
     positive_prompt: str = field(default=None)
     negative_prompt: str = field(default=None)
     face_prompt: str = field(default=None)
+    skin_prompt: str = field(default=None)
     hair_prompt: str = field(default=None)
     eyes_prompt: str = field(default=None)
 
     positive_conditioning: csn.Conditioning = field(default=None)
     negative_conditioning: csn.Conditioning = field(default=None)
     face_conditioning: csn.Conditioning = field(default=None)
+    skin_conditioning: csn.Conditioning = field(default=None)
     hair_conditioning: csn.Conditioning = field(default=None)
     eyes_conditioning: csn.Conditioning = field(default=None)
 

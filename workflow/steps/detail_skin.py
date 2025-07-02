@@ -1,24 +1,47 @@
 from comfy_nodes import *
 
-from constants import app_constants
 from workflow.state import WorkflowState
 from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 
 @register_step
 class DetailHairStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Hair Detail", order=4)
+    metadata = WorkflowMetadata(label="Skin Detail", order=2)
     usebbox = False
     applymask = True
+
+    def _skin_segment(self, image):
+        ctx = self.ctx
+        gd_sam = GroundingDinoSAMSegmentSegmentAnything
+
+        _, person_mask = gd_sam(
+            ctx.sam_model, ctx.gd_model, image, prompt="person", threshold=0.5
+        )
+        _, clothes_mask = gd_sam(
+            ctx.sam_model, ctx.gd_model, image, prompt="clothes", threshold=0.5
+        )
+        _, hair_mask = gd_sam(
+            ctx.sam_model, ctx.gd_model, image, prompt="hair", threshold=0.5
+        )
+
+        person_mask = MaskErodeRegion(person_mask, 10)
+        clothes_mask = MaskDilateRegion(clothes_mask, 10)
+        hair_mask = MaskDilateRegion(hair_mask, 10)
+
+        mask = SubtractMask(person_mask, clothes_mask)
+        mask = SubtractMask(mask, hair_mask)
+
+        mask = MaskDilateRegion(mask, 10)
+        mask = MaskFillHoles(mask)
+
+        return mask
 
     def run(self, state: WorkflowState) -> WorkflowState:
         ctx = self.ctx
 
         image = state.image
 
-        _, mask = GroundingDinoSAMSegmentSegmentAnything(
-            ctx.sam_model, ctx.gd_model, image, prompt="hair", threshold=0.5
-        )
+        mask = self._skin_segment(image)
 
         if self.usebbox:
             image_width, image_height, _ = GetImageSize(image)
@@ -66,10 +89,10 @@ class DetailHairStep(WorkflowStep):
             latent=cropped_latent,
             scale=1.6,
             model=model,
-            positive=ctx.hair_conditioning,
+            positive=ctx.skin_conditioning,
             negative=ctx.negative_conditioning,
-            steps=ctx.steps["detail_hair"],
-            cfg=self._scale_cfg(ctx.cfg["detail_hair"]),
+            steps=ctx.steps["detail_skin"],
+            cfg=self._scale_cfg(ctx.cfg["detail_skin"]),
             denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=self.metadata.order,

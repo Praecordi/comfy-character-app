@@ -18,6 +18,7 @@ class CharacterWorkflow:
         self.base_steps = {
             "base_gen": 30,
             "latent_upscale": (20, 10),
+            "detail_skin": (15, 10),
             "detail_face": 15,
             "detail_hair": (15, 10),
             "detail_eyes": (15, 10),
@@ -26,6 +27,7 @@ class CharacterWorkflow:
         self.base_cfg = {
             "base_gen": 8,
             "latent_upscale": (10, 4),
+            "detail_skin": (6, 4),
             "detail_face": 4,
             "detail_hair": (7, 5),
             "detail_eyes": (6, 4),
@@ -46,6 +48,7 @@ class CharacterWorkflow:
             neg_prompt=ui_state["negative_prompt"],
             style_prompt=ui_state["style_prompt"],
             face_prompt=ui_state["face_prompt"],
+            skin_prompt=ui_state["skin_prompt"],
             hair_prompt=ui_state["hair_prompt"],
             eyes_prompt=ui_state["eyes_prompt"],
             character=ui_state["character"],
@@ -213,6 +216,7 @@ class CharacterWorkflow:
         neg_prompt,
         style_prompt,
         face_prompt,
+        skin_prompt,
         hair_prompt,
         eyes_prompt,
         character,
@@ -237,6 +241,11 @@ class CharacterWorkflow:
             style_prompt if apply_style else None,
             apply_scores,
         )
+        skin = build_conditioning_prompt(
+            f"{{main_subject}}, {skin_prompt}" or "",
+            style_prompt if apply_style else None,
+            apply_scores,
+        )
         hair = build_conditioning_prompt(
             hair_prompt or "", style_prompt if apply_style else None, apply_scores
         )
@@ -244,7 +253,7 @@ class CharacterWorkflow:
             eyes_prompt or "", style_prompt if apply_style else None, apply_scores
         )
 
-        prompts = [pos, neg, face, hair, eyes]
+        prompts = [pos, neg, face, skin, hair, eyes]
         conds = []
 
         def encode(text: str) -> csn.Conditioning:
@@ -268,13 +277,15 @@ class CharacterWorkflow:
             positive_prompt=prompts[0],
             negative_prompt=prompts[1],
             face_prompt=prompts[2],
-            hair_prompt=prompts[3],
-            eyes_prompt=prompts[4],
+            skin_prompt=prompts[3],
+            hair_prompt=prompts[4],
+            eyes_prompt=prompts[5],
             positive_conditioning=conds[0],
             negative_conditioning=conds[1],
             face_conditioning=conds[2],
-            hair_conditioning=conds[3],
-            eyes_conditioning=conds[4],
+            skin_conditioning=conds[3],
+            hair_conditioning=conds[4],
+            eyes_conditioning=conds[5],
         )
 
     def _init_input_images(self, input_image, cn_image, cn_strength, face_images):

@@ -6,7 +6,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 @register_step
 class DetailEyesStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Eyes Detail", order=4)
+    metadata = WorkflowMetadata(label="Eyes Detail", order=5)
     usebbox = True
     applymask = True
 
@@ -71,7 +71,7 @@ class DetailEyesStep(WorkflowStep):
             cfg=self._scale_cfg(ctx.cfg["detail_eyes"]),
             denoise=(0.6, 0.5),
             num_iterations=2,
-            seed_offset=4,
+            seed_offset=self.metadata.order,
             optional_mask=cropped_mask if self.applymask else None,
             apply_cn=True,
             cn_strength=0.5,

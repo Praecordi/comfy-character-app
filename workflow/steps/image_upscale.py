@@ -6,7 +6,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 @register_step
 class ImageUpscaleStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Image Upscale", order=5)
+    metadata = WorkflowMetadata(label="Image Upscale", order=6)
 
     def run(self, state: WorkflowState) -> WorkflowState:
         ctx = self.ctx
@@ -14,8 +14,8 @@ class ImageUpscaleStep(WorkflowStep):
         image = state.image
 
         positive = ConditioningConcat(ctx.positive_conditioning, ctx.eyes_conditioning)
-        positive = ConditioningConcat(positive, ctx.face_conditioning)
         positive = ConditioningConcat(positive, ctx.hair_conditioning)
+        positive = ConditioningConcat(positive, ctx.skin_conditioning)
 
         if ctx.swap_method == "instantid":
             model, positive, negative = ApplyInstantIDAdvanced(
@@ -47,7 +47,7 @@ class ImageUpscaleStep(WorkflowStep):
             cfg=self._scale_cfg(ctx.cfg["image_upscale"]),
             denoise=(0.7, 0.6),
             num_iterations=2,
-            seed_offset=5,
+            seed_offset=self.metadata.order,
             sharpen=0.4,
             apply_cn=True,
             cn_strength=0.9,

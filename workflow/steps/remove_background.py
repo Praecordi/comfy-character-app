@@ -6,7 +6,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 @register_step
 class ImageUpscaleStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Remove Background", order=6)
+    metadata = WorkflowMetadata(label="Remove Background", order=7)
     make_transparent = True
 
     def run(self, state: WorkflowState) -> WorkflowState:

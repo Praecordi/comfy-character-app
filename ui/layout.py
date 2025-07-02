@@ -141,6 +141,13 @@ class MainLayout:
                                     interactive=True,
                                     elem_classes=["attention-editable"],
                                 )
+                                skin_prompt = gr.Textbox(
+                                    label="Skin Prompt",
+                                    lines=4,
+                                    placeholder="Enter skin prompt here...",
+                                    interactive=True,
+                                    elem_classes=["attention-editable"],
+                                )
                                 hair_prompt = gr.Textbox(
                                     label="Hair Prompt",
                                     lines=4,
@@ -170,6 +177,7 @@ class MainLayout:
             "character": character,
             "character_description": character_description,
             "face_prompt": face_prompt,
+            "skin_prompt": skin_prompt,
             "hair_prompt": hair_prompt,
             "eyes_prompt": eyes_prompt,
             "face_images": face_images,

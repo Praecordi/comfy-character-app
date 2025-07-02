@@ -24,7 +24,7 @@ class LatentUpscaleStep(WorkflowStep):
             cfg=self._scale_cfg(ctx.cfg["latent_upscale"]),
             denoise=(0.8, 0.4),
             num_iterations=3,
-            seed_offset=1,
+            seed_offset=self.metadata.order,
             apply_cn=True,
             cn_strength=0.2,
         )

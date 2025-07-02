@@ -32,6 +32,7 @@ def on_character_change(character):
             gr.update(value="", interactive=True),
             gr.update(value="", interactive=True),
             gr.update(value="", interactive=True),
+            gr.update(value="", interactive=True),
             gr.update(value=None, interactive=True),
             gr.update(value=""),
         )
@@ -47,6 +48,7 @@ def on_character_change(character):
 
         return (
             gr.update(value=characters[char_key]["face"], interactive=False),
+            gr.update(value=characters[char_key]["skin"], interactive=False),
             gr.update(value=characters[char_key]["hair"], interactive=False),
             gr.update(value=characters[char_key]["eyes"], interactive=False),
             gr.update(
@@ -76,6 +78,7 @@ def _bind_character_change(components: Dict[str, gr.Component]):
     input_keys = ["character"]
     output_keys = [
         "face_prompt",
+        "skin_prompt",
         "hair_prompt",
         "eyes_prompt",
         "face_images",
@@ -138,6 +141,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "style_image",
         "style_strength",
         "face_prompt",
+        "skin_prompt",
         "hair_prompt",
         "eyes_prompt",
         "face_images",
@@ -201,6 +205,7 @@ def _bind_local_storage(
         "style_image",
         "style_strength",
         "face_prompt",
+        "skin_prompt",
         "hair_prompt",
         "eyes_prompt",
         "face_images",
@@ -248,6 +253,7 @@ def _bind_local_storage(
             char_tuple[1],
             char_tuple[2],
             char_tuple[3],
+            char_tuple[4],
             state.get("swap_method", "instantid"),
             state.get("positive_prompt", ""),
             state.get("negative_prompt", ""),

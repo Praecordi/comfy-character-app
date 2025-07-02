@@ -6,7 +6,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 @register_step
 class DetailFaceStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Face Detail", order=2)
+    metadata = WorkflowMetadata(label="Face Detail", order=3)
     usebbox = True
     applymask = True
 
@@ -93,7 +93,7 @@ class DetailFaceStep(WorkflowStep):
             cfg=self._scale_cfg(ctx.cfg["detail_face"]),
             denoise=(0.7, 0.6),
             num_iterations=3,
-            seed_offset=2,
+            seed_offset=self.metadata.order,
             optional_mask=cropped_mask if self.applymask else None,
             apply_cn=True,
             cn_strength=0.5,

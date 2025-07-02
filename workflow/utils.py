@@ -11,6 +11,7 @@ Perturb Seed: {pseed}
 Positive Prompt: {pprompt}
 Negative Prompt: {nprompt}
 Face Prompt: {fprompt}
+Skin Prompt: {sprompt}
 Hair Prompt: {hprompt}
 Eyes Prompt: {eprompt}""".format(
         bseed=ctx.base_seed,
@@ -18,6 +19,7 @@ Eyes Prompt: {eprompt}""".format(
         pprompt=ctx.positive_prompt,
         nprompt=ctx.negative_prompt,
         fprompt=ctx.face_prompt,
+        sprompt=ctx.skin_prompt,
         hprompt=ctx.hair_prompt,
         eprompt=ctx.eyes_prompt,
     )
