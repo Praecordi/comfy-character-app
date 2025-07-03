@@ -156,9 +156,15 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     ]
     generate_outputs = ["output", "output_text"]
 
+    generate_caption_inputs = ["input_image"]
+    generate_caption_outputs = ["positive_prompt"]
+
     def generate(*args):
         for res in runner.generate(dict(zip(generate_inputs, args))):
             yield res
+
+    def generate_caption(*args):
+        return runner.generate_caption(dict(zip(generate_caption_inputs, args)))
 
     components["generate"].click(
         generate,
@@ -167,6 +173,12 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     )
 
     components["interrupt"].click(runner.interrupt)
+
+    components["auto_caption"].click(
+        generate_caption,
+        inputs=[components[x] for x in generate_caption_inputs],
+        outputs=[components[x] for x in generate_caption_outputs],
+    )
 
 
 def _bind_local_storage(

@@ -4,6 +4,7 @@ import gradio as gr
 
 from comfy_nodes import queue
 from workflow.core import CharacterWorkflow
+from workflow.caption import CaptionWorkflow
 from workflow.utils import make_output_text
 
 
@@ -63,6 +64,15 @@ class WorkflowRunner:
             yield gr.update(value=res_agg), gr.update()
         finally:
             self._stop_event.set()
+
+    def generate_caption(self, in_state: dict):
+        wf = CaptionWorkflow(in_state)
+
+        caption = wf.generate()
+
+        caption = caption._output["text"][0]
+
+        return caption
 
     def interrupt(self):
         queue.cancel_current()

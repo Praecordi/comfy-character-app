@@ -24,7 +24,7 @@ class UI:
 
     def create_ui(self):
         with gr.Blocks(
-            title="Character Generator", head_paths=["attention.html"]
+            title="Character Generator", head_paths=["head.html"]
         ) as demo:
             gr.Markdown("# Character Generator")
 

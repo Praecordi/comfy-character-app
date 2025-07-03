@@ -24,21 +24,33 @@ class MainLayout:
 
     @staticmethod
     def create_main_prompts():
-        positive_prompt = gr.Textbox(
-            label="Positive Prompt",
-            lines=4,
-            placeholder="Enter positive prompt here...",
-            elem_classes=["attention-editable"],
-        )
+        with gr.Row(equal_height=True):
+            positive_prompt = gr.Textbox(
+                label="Positive Prompt",
+                lines=4,
+                placeholder="Enter positive prompt here...",
+                elem_classes=["attention-editable"],
+                scale=6,
+            )
 
-        negative_prompt = gr.Textbox(
-            label="Negative Prompt",
-            lines=4,
-            placeholder="Enter negative prompt here...",
-            elem_classes=["attention-editable"],
-        )
+            auto_caption = gr.Button("Caption Input Image", variant="primary", scale=1)
 
-        return {"positive_prompt": positive_prompt, "negative_prompt": negative_prompt}
+        with gr.Row(equal_height=True):
+            negative_prompt = gr.Textbox(
+                label="Negative Prompt",
+                lines=4,
+                placeholder="Enter negative prompt here...",
+                elem_classes=["attention-editable"],
+                scale=6,
+            )
+
+            gr.Button("Invisible Button", scale=1, elem_id="invisible", interactive=False)
+
+        return {
+            "positive_prompt": positive_prompt,
+            "negative_prompt": negative_prompt,
+            "auto_caption": auto_caption,
+        }
 
     @staticmethod
     def create_buttons():
