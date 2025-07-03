@@ -5,7 +5,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 
 @register_step
-class DetailHairStep(WorkflowStep):
+class DetailSkinStep(WorkflowStep):
     metadata = WorkflowMetadata(label="Skin Detail", order=2)
     usebbox = False
     applymask = True
@@ -98,7 +98,7 @@ class DetailHairStep(WorkflowStep):
             seed_offset=self.metadata.order,
             optional_mask=cropped_mask if self.applymask else None,
             apply_cn=True,
-            cn_strength=0.5,
+            cn_strength=0.75,
         )
 
         cropped_image = VAEDecode(cropped_latent, ctx.vae)

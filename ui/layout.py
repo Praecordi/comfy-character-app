@@ -57,12 +57,52 @@ class MainLayout:
 
     @staticmethod
     def create_controllers():
-        process_controller = gr.CheckboxGroup(
-            label="Process Controllers",
-            choices=get_steps(),
-        )
+        with gr.Accordion("Process Controller", open=True, elem_id="proc-acrdn"):
+            process_controller = gr.CheckboxGroup(
+                label="Process Controllers",
+                choices=get_steps(),
+            )
 
-        return {"process_controller": process_controller}
+            with gr.Row():
+                with gr.Column():
+                    latent_upscale_scale = gr.Slider(
+                        minimum=1,
+                        maximum=2,
+                        step=0.05,
+                        label="Latent Upscale Scale",
+                        show_reset_button=False,
+                    )
+                    latent_upscale_adherence = gr.Slider(
+                        minimum=0,
+                        maximum=1,
+                        step=0.05,
+                        label="Latent Upscale Adherence",
+                        show_reset_button=False,
+                    )
+
+                with gr.Column():
+                    image_upscale_scale = gr.Slider(
+                        minimum=1,
+                        maximum=2,
+                        step=0.05,
+                        label="Image Upscale Scale",
+                        show_reset_button=False,
+                    )
+                    image_upscale_adherence = gr.Slider(
+                        minimum=0,
+                        maximum=1,
+                        step=0.05,
+                        label="Image Upscale Adherence",
+                        show_reset_button=False,
+                    )
+
+        return {
+            "process_controller": process_controller,
+            "latent_scale": latent_upscale_scale,
+            "latent_adherence": latent_upscale_adherence,
+            "image_scale": image_upscale_scale,
+            "image_adherence": image_upscale_adherence,
+        }
 
     @staticmethod
     def create_output_panel():
@@ -196,6 +236,7 @@ class MainLayout:
                 show_download_button=False,
                 show_fullscreen_button=False,
                 show_share_button=False,
+                height=512,
             )
 
         checkpoint = gr.Dropdown(

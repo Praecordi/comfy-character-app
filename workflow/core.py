@@ -66,6 +66,10 @@ class CharacterWorkflow:
             base_seed=ui_state["base_seed"],
             perturb_seed=ui_state["perturb_seed"],
             swap_method=ui_state["swap_method"],
+            latent_scale=ui_state["latent_scale"],
+            latent_adherence=ui_state["latent_adherence"],
+            image_scale=ui_state["image_scale"],
+            image_adherence=ui_state["image_adherence"],
         )
 
     def _init_models(self, checkpoint, fewsteplora, resolution, use_detail_daemon):

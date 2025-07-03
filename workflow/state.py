@@ -28,6 +28,11 @@ class WorkflowContext:
     cfg: Dict[str, Union[int, float, Tuple]] = field(default=None)
     resolution: str = field(default=None)
 
+    latent_scale: float = field(default=None)
+    latent_adherence: float = field(default=None)
+    image_scale: float = field(default=None)
+    image_adherence: float = field(default=None)
+
     sam_model: csn.SamModel = field(default=None)
     gd_model: csn.GroundingDinoModel = field(default=None)
 

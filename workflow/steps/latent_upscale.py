@@ -14,19 +14,40 @@ class LatentUpscaleStep(WorkflowStep):
         image = state.image
         latent = state.latent
 
-        latent = self._iterative_latent_upscale(
-            latent=latent,
-            scale=1.6,
-            model=ctx.model,
+        cn_positive, cn_negative = ControlNetApplyAdvanced(
             positive=ctx.positive_conditioning,
             negative=ctx.negative_conditioning,
+            control_net=ctx.cn,
+            image=image,
+            strength=ctx.latent_adherence,
+            start_percent=0,
+            end_percent=1,
+            vae=ctx.vae,
+        )
+
+        denoise = (-0.3 * ctx.latent_adherence + 0.8, -0.2 * ctx.latent_adherence + 0.4)
+
+        if ctx.latent_scale < 1.25:
+            num_iter = 1
+        elif ctx.latent_scale < 1.5:
+            num_iter = 2
+        elif ctx.latent_scale < 1.75:
+            num_iter = 3
+        else:
+            num_iter = 4
+
+        latent = self._iterative_latent_upscale(
+            latent=latent,
+            scale=ctx.latent_scale,
+            model=ctx.model,
+            positive=cn_positive,
+            negative=cn_negative,
             steps=ctx.steps["latent_upscale"],
             cfg=self._scale_cfg(ctx.cfg["latent_upscale"]),
-            denoise=(0.8, 0.4),
-            num_iterations=3,
+            denoise=denoise,
+            num_iterations=num_iter,
             seed_offset=self.metadata.order,
-            apply_cn=True,
-            cn_strength=0.2,
+            apply_cn=False,
         )
 
         upscaled = VAEDecode(latent, ctx.vae)
