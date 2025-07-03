@@ -101,6 +101,8 @@ class WorkflowStep(ABC):
                     end_percent=cn_limits[1],
                     vae=ctx.vae,
                 )
+            else:
+                cn_positive, cn_negative = positive, negative
 
             latent = csn.NNLatentUpscale(latent, "SDXL", ratio)
             if optional_mask is not None:
@@ -169,6 +171,8 @@ class WorkflowStep(ABC):
                     end_percent=cn_limits[1],
                     vae=ctx.vae,
                 )
+            else:
+                cn_positive, cn_negative = positive, negative
 
             if ctx.upscale_model:
                 image, _ = csn.CRUpscaleImage(
