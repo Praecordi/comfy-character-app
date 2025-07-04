@@ -23,7 +23,7 @@ class WorkflowRunner:
         with self._preview_lock:
             self._latest_preview = None
 
-    def generate(self, in_state: dict):
+    async def generate(self, in_state: dict):
         self._reset_preview()
         self._stop_event.clear()
 
@@ -48,13 +48,13 @@ class WorkflowRunner:
         yield gr.update(), out_text
 
         try:
-            for result, label in wf.generate(in_state["process_controller"]):
+            async for result, label in wf.generate(in_state["process_controller"]):
                 if result is not None:
-                    image = result.wait()
+                    image = await result
                     image_size = image[0].size
 
                     res_agg += [
-                        (image[0], f"{label} ({image_size[0]} X {image_size[1]})")
+                        (image[0], f"{label} ({image_size[0]} x {image_size[1]})")
                     ]
 
                     yield gr.update(value=res_agg), gr.update()

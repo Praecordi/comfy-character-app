@@ -1,4 +1,5 @@
 from typing import List, Tuple, Iterator
+import traceback
 
 import comfy_nodes as csn
 from constants import app_constants
@@ -352,7 +353,7 @@ class CharacterWorkflow:
         for _, step in sorted(steps, key=lambda x: x[0]):
             yield step
 
-    def generate(self, controller: List[str]) -> Iterator[Tuple[csn.Image, str]]:
+    async def generate(self, controller: List[str]):
         results: List[Tuple[csn.Image, str]] = []
         with csn.Workflow(queue=False) as wf:
             _, _, _, _, _, latent, _ = csn.CRAspectRatio(
@@ -366,9 +367,17 @@ class CharacterWorkflow:
                 state = step.run(state)
                 results.append((csn.PreviewImage(state.image), step.metadata.label))
 
-        wf.queue()
+        await wf._queue()
 
-        for result, label in results:
-            result.task.add_preview_callback(self.preview_callback)
-            yield result.wait(), label
-            result.task.remove_preview_callback(self.preview_callback)
+        for a_result, label in results:
+            try:
+                a_result.task.add_preview_callback(self.preview_callback)
+                result = await a_result
+                yield result, label
+                a_result.task.remove_preview_callback(self.preview_callback)
+            except Exception as e:
+                print(f"Label: {label}")
+                print(f"Node Info: {result.node_info}")
+                print(f"Node Prompt: {result.node_prompt}")
+                print(f"Output Slot: {result.output_slot}")
+                print(traceback.format_exc())

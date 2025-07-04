@@ -159,8 +159,8 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     generate_caption_inputs = ["input_image"]
     generate_caption_outputs = ["positive_prompt"]
 
-    def generate(*args):
-        for res in runner.generate(dict(zip(generate_inputs, args))):
+    async def generate(*args):
+        async for res in runner.generate(dict(zip(generate_inputs, args))):
             yield res
 
     def generate_caption(*args):
