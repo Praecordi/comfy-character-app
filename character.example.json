@@ -1,5 +1,6 @@
 {
   "lara_croft": {
+    "skin": "light brown skin",
     "hair": "braided brown hair, intricate details, slightly messy",
     "eyes": "determined green eyes, sharp gaze, detailed eyelashes",
     "face": "oval face, high cheekbones, subtle smile lines, tanned skin",
@@ -10,6 +11,7 @@
     "environment": "jungle ruins background"
   },
   "aloy": {
+    "skin": "light skin, freckled",
     "hair": "red hair with tribal braids, slightly windswept",
     "eyes": "intense hazel eyes, focused expression",
     "face": "strong jawline, freckled complexion, determined expression",
@@ -20,6 +22,7 @@
     "environment": "post-apocalyptic wilderness"
   },
   "yennefer": {
+    "skin": "pale smooth skin",
     "hair": "raven black wavy hair, voluminous",
     "eyes": "mysterious violet eyes, intense gaze",
     "face": "porcelain skin, sharp features, perfectly arched eyebrows",

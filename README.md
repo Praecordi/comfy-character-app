@@ -38,15 +38,16 @@ This project provides a Gradio-based interface for generating consistent charact
 
 ### Custom Nodes
 
-- ComfyUI Impact Pack (https://github.com/ltdrdata/ComfyUI-Impact-Pack)
-- ComfyUI Impact Subpack (https://github.com/ltdrdata/ComfyUI-Impact-Subpack)
-- ComfyUI Inspire Pack (https://github.com/ltdrdata/ComfyUI-Inspire-Pack)
-- ComfyUI InstantID (https://github.com/cubiq/ComfyUI_InstantID)
-- ComfyUI Essentials (https://github.com/cubiq/ComfyUI_essentials)
-- Comfyroll Studio (https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes)
-- ComfyUI Neural Network Latent Upscale (https://github.com/Ttl/ComfyUi_NNLatentUpscale)
-- ComfyUI ReActor (https://github.com/Gourieff/ComfyUI-ReActor/tree/main)
-- ComfyUI Detail Daemon (https://github.com/Jonseed/ComfyUI-Detail-Daemon)
+- [ComfyUI Impact Pack](https://github.com/ltdrdata/ComfyUI-Impact-Pack)
+- [ComfyUI Impact Subpack](https://github.com/ltdrdata/ComfyUI-Impact-Subpack)
+- [ComfyUI Inspire Pack](https://github.com/ltdrdata/ComfyUI-Inspire-Pack)
+- [ComfyUI InstantID](https://github.com/cubiq/ComfyUI_InstantID)
+- [ComfyUI Essentials](https://github.com/cubiq/ComfyUI_essentials)
+- [Comfyroll Studio](https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes)
+- [ComfyUI Neural Network Latent Upscale](https://github.com/Ttl/ComfyUi_NNLatentUpscale)
+- [ComfyUI ReActor](https://github.com/Gourieff/ComfyUI-ReActor/tree/main)
+- [ComfyUI Detail Daemon](https://github.com/Jonseed/ComfyUI-Detail-Daemon)
+- [ComfyUI Florence2](https://github.com/kijai/ComfyUI-Florence2)
 
 ## Installation
 
@@ -91,8 +92,7 @@ pip install -r requirements.txt
     "instantid_controlnet": "your_instantid_controlnet.safetensors",
     "lcm_lora": "your_lcm_lora.safetensors",
     "turbo_lora": "your_turbo_lora.safetensors",
-    "dpo_turbo_lora": "your_dpo_turbo_lora.safetensors",
-    "hair_seg_model": "your_hair_seg_model.pt"
+    "dpo_turbo_lora": "your_dpo_turbo_lora.safetensors"
   }
 }
 ```
