@@ -2,7 +2,7 @@ from typing import Dict
 import gradio as gr
 
 from comfy_nodes import queue
-from constants import characters, comfyui_input
+import constants
 
 from ui import PREVIEW_REFRESH_RATE
 from ui.runner import WorkflowRunner
@@ -38,19 +38,24 @@ def on_character_change(character):
         )
     else:
         char_key = character.lower()
-        if isinstance(characters[char_key]["face_reference"], list):
+        if isinstance(constants.characters[char_key]["face_reference"], list):
             reference = [
-                str(comfyui_input / ref)
-                for ref in characters[char_key]["face_reference"]
+                str(constants.comfyui_input / ref)
+                for ref in constants.characters[char_key]["face_reference"]
             ]
         else:
-            reference = [str(comfyui_input / characters[char_key]["face_reference"])]
+            reference = [
+                str(
+                    constants.comfyui_input
+                    / constants.characters[char_key]["face_reference"]
+                )
+            ]
 
         return (
-            gr.update(value=characters[char_key]["face"], interactive=False),
-            gr.update(value=characters[char_key]["skin"], interactive=False),
-            gr.update(value=characters[char_key]["hair"], interactive=False),
-            gr.update(value=characters[char_key]["eyes"], interactive=False),
+            gr.update(value=constants.characters[char_key]["face"], interactive=False),
+            gr.update(value=constants.characters[char_key]["skin"], interactive=False),
+            gr.update(value=constants.characters[char_key]["hair"], interactive=False),
+            gr.update(value=constants.characters[char_key]["eyes"], interactive=False),
             gr.update(
                 value=reference,
                 interactive=False,
@@ -245,7 +250,9 @@ def _bind_local_storage(
     def load_state(state):
         state = state or {}
         checkpoint = state.get("checkpoint", checkpoints[0][1])
-        character = state.get("character", list(characters.keys())[0].capitalize())
+        character = state.get(
+            "character", list(constants.characters.keys())[0].capitalize()
+        )
 
         char_tuple = on_character_change(character)
         disable = any(

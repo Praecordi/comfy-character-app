@@ -4,8 +4,9 @@ import gradio as gr
 PREVIEW_REFRESH_RATE = 0.5
 
 from ui.runner import WorkflowRunner
-from ui.layout import MainLayout
-from ui.events import bind_events
+from ui.layout import MainLayout, CharacterManagerLayout
+from ui.generator_events import bind_events as bind_generator_events
+from ui.cm_events import bind_events as bind_cm_events
 
 
 class UI:
@@ -18,7 +19,6 @@ class UI:
         self.checkpoints = checkpoints
         self.resolutions = resolutions
         self.upscalers = upscalers
-        self.components = {}
 
         self.runner = WorkflowRunner()
 
@@ -26,16 +26,21 @@ class UI:
         with gr.Blocks(title="Praecordi's Character Generator", head_paths=["head.html"]) as demo:
             gr.Markdown("# Praecordi's Character Generator")
 
-            self.components = MainLayout.create(
-                self.checkpoints, self.resolutions, self.upscalers
-            )
+            with gr.Tab("Generator"):
+                main_components = MainLayout.create(
+                    self.checkpoints, self.resolutions, self.upscalers
+                )
+            with gr.Tab("Character Manager"):
+                cm_components = CharacterManagerLayout.create()
 
-            self.components["browser_state"] = gr.BrowserState(
+            main_components["browser_state"] = gr.BrowserState(
                 storage_key="ccw-ui-state", secret="ccw-secret"
             )
 
-            bind_events(
-                demo, self.components, self.runner, self.checkpoints, self.resolutions
+            bind_generator_events(
+                demo, main_components, self.runner, self.checkpoints, self.resolutions
             )
+
+            bind_cm_events(demo, cm_components)
 
         return demo
