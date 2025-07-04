@@ -65,10 +65,10 @@ class WorkflowRunner:
         finally:
             self._stop_event.set()
 
-    def generate_caption(self, in_state: dict):
+    async def generate_caption(self, in_state: dict):
         wf = CaptionWorkflow(in_state)
 
-        caption = wf.generate()
+        caption = await wf.generate()
 
         caption = caption._output["text"][0]
 

@@ -13,7 +13,7 @@ class CaptionWorkflow:
             convert_to_safetensors=True,
         )
 
-    def generate(self):
+    async def generate(self):
         with csn.Workflow(queue=False) as wf:
             _, _, caption, _ = csn.Florence2Run(
                 self.image,
@@ -24,10 +24,10 @@ class CaptionWorkflow:
 
             caption = csn.PreviewAny(caption)
 
-        wf.queue()
+        await wf._queue()
 
         try:
-            return caption.wait()
+            return await caption
         except RuntimeError as e:
             print("Error in captioning")
             print(e)
