@@ -44,7 +44,9 @@ class MainLayout:
                 scale=6,
             )
 
-            gr.Button("Invisible Button", scale=1, elem_id="invisible", interactive=False)
+            gr.Button(
+                "Invisible Button", scale=1, elem_id="invisible", interactive=False
+            )
 
         return {
             "positive_prompt": positive_prompt,
@@ -156,9 +158,9 @@ class MainLayout:
 
     @staticmethod
     def create_character_settings():
-        character_choices = [char.capitalize() for char in characters.keys()] + [
-            "Custom"
-        ]
+        character_choices = [
+            char.replace("_", " ").title() for char in characters.keys()
+        ] + ["Custom"]
 
         with gr.Group():
             gr.Markdown("Character Settings", container=True)
@@ -335,6 +337,8 @@ class MainLayout:
     def create(checkpoints, resolutions, upscalers):
         components = {}
 
+        gr.Markdown("## Generator")
+
         out_comps = MainLayout.create_output_panel()
 
         with gr.Row():
@@ -363,5 +367,113 @@ class MainLayout:
             **controller_comps,
             **button_comps,
         }
+
+        return components
+
+
+class CharacterManagerLayout:
+
+    @staticmethod
+    def create_panel():
+        character_choices = [
+            char.replace("_", " ").title() for char in characters.keys()
+        ]
+
+        current_fields = gr.State(value={})
+
+        with gr.Row():
+            character_select = gr.Dropdown(
+                label="Select Character",
+                choices=character_choices,
+                value=None,
+                interactive=True,
+            )
+
+            with gr.Group():
+                new_char = gr.Textbox(
+                    label="New Character Name",
+                    placeholder="Enter character name...",
+                )
+
+                new_char_add = gr.Button("Add Character", variant="primary")
+
+
+        @gr.render(
+            inputs=current_fields,
+            triggers=[character_select.change, current_fields.change],
+        )
+        def render_fields(fields):
+            with gr.Column():
+                for i, (key, value) in enumerate(fields.items()):
+                    CharacterManagerLayout.create_field(i, key, value)
+
+        with gr.Row():
+            with gr.Group():
+                new_field = gr.Textbox(
+                    label="New Field Key", placeholder="Enter new field key"
+                )
+                add_field_btn = gr.Button("Add Field")
+            save_btn = gr.Button("Save Characters", variant="primary")
+
+        return {
+            "character_select": character_select,
+            "new_character": new_char,
+            "new_character_btn": new_char_add,
+            "new_field": new_field,
+            "add_field_btn": add_field_btn,
+            "save_btn": save_btn,
+            "current_fields": current_fields,
+        }
+
+    @staticmethod
+    def create_field(
+        field_name,
+        field_value,
+        removable=True,
+        key=None,
+        field_name_params={},
+        field_value_params={},
+    ):
+        if key is not None:
+            attr_params = {"key": f"attr_{key}", "preserved_by_key": ["label"]}
+            val_params = {"key": f"val_{key}", "preserved_by_key": ["label"]}
+            btn_params = {"key": f"btn_{key}"}
+        else:
+            attr_params, val_params, btn_params = {}
+
+        components = {}
+        with gr.Row(equal_height=True):
+            components["attribute"] = gr.Textbox(
+                label="Attribute",
+                value=field_name,
+                interactive=True,
+                scale=2,
+                **attr_params,
+                **field_name_params,
+            )
+            components["value"] = gr.Textbox(
+                label="Value",
+                value=field_value,
+                interactive=True,
+                scale=8,
+                **val_params,
+                **field_value_params,
+            )
+            if removable:
+                components["button"] = gr.Button(
+                    "❌", variant="stop", scale=1, **btn_params
+                )
+
+        return components
+
+    @staticmethod
+    def create():
+        components = {}
+
+        gr.Markdown("## Character Manager")
+
+        main_comp = CharacterManagerLayout.create_panel()
+
+        components = {**main_comp}
 
         return components
