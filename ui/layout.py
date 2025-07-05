@@ -372,6 +372,26 @@ class MainLayout:
 
 
 class CharacterManagerLayout:
+    @staticmethod
+    def create_face_field():
+        with gr.Group():
+            with gr.Row(equal_height=True):
+                gr.Textbox(
+                    "Face References", label="Attribute", interactive=False, scale=2
+                )
+
+                char_gallery = gr.Gallery(
+                    label="Face Images",
+                    type="filepath",
+                    file_types=["image"],
+                    show_download_button=False,
+                    show_fullscreen_button=False,
+                    show_share_button=False,
+                    interactive=True,
+                    scale=8,
+                )
+
+        return char_gallery
 
     @staticmethod
     def create_panel():
@@ -397,6 +417,39 @@ class CharacterManagerLayout:
 
                 new_char_add = gr.Button("Add Character", variant="primary")
 
+        with gr.Column():
+            face_images = CharacterManagerLayout.create_face_field()
+
+            face_prompt = CharacterManagerLayout.create_field(
+                "face",
+                "",
+                removable=False,
+                field_name_params={"interactive": False},
+                field_value_params={"interactive": True},
+            )["value"]
+            skin_prompt = CharacterManagerLayout.create_field(
+                "skin",
+                "",
+                removable=False,
+                field_name_params={"interactive": False},
+                field_value_params={"interactive": True},
+            )["value"]
+            hair_prompt = CharacterManagerLayout.create_field(
+                "hair",
+                "",
+                removable=False,
+                field_name_params={"interactive": False},
+                field_value_params={"interactive": True},
+            )["value"]
+            eyes_prompt = CharacterManagerLayout.create_field(
+                "eyes",
+                "",
+                removable=False,
+                field_name_params={"interactive": False},
+                field_value_params={"interactive": True},
+            )["value"]
+
+        gr.Markdown("### Other Fields")
 
         @gr.render(
             inputs=current_fields,
@@ -405,7 +458,7 @@ class CharacterManagerLayout:
         def render_fields(fields):
             with gr.Column():
                 for i, (key, value) in enumerate(fields.items()):
-                    CharacterManagerLayout.create_field(i, key, value)
+                    CharacterManagerLayout.create_field(key, value, key=i)
 
         with gr.Row():
             with gr.Group():
@@ -413,15 +466,24 @@ class CharacterManagerLayout:
                     label="New Field Key", placeholder="Enter new field key"
                 )
                 add_field_btn = gr.Button("Add Field")
-            save_btn = gr.Button("Save Characters", variant="primary")
+
+            with gr.Column():
+                save_btn = gr.Button("Save Characters", variant="primary")
+                reset_btn = gr.Button("Reset Characters", variant="secondary")
 
         return {
             "character_select": character_select,
             "new_character": new_char,
             "new_character_btn": new_char_add,
+            "face_images": face_images,
+            "face_prompt": face_prompt,
+            "skin_prompt": skin_prompt,
+            "hair_prompt": hair_prompt,
+            "eyes_prompt": eyes_prompt,
             "new_field": new_field,
             "add_field_btn": add_field_btn,
             "save_btn": save_btn,
+            "reset_btn": reset_btn,
             "current_fields": current_fields,
         }
 
@@ -439,30 +501,31 @@ class CharacterManagerLayout:
             val_params = {"key": f"val_{key}", "preserved_by_key": ["label"]}
             btn_params = {"key": f"btn_{key}"}
         else:
-            attr_params, val_params, btn_params = {}
+            attr_params, val_params, btn_params = {}, {}, {}
 
         components = {}
-        with gr.Row(equal_height=True):
-            components["attribute"] = gr.Textbox(
-                label="Attribute",
-                value=field_name,
-                interactive=True,
-                scale=2,
-                **attr_params,
-                **field_name_params,
-            )
-            components["value"] = gr.Textbox(
-                label="Value",
-                value=field_value,
-                interactive=True,
-                scale=8,
-                **val_params,
-                **field_value_params,
-            )
-            if removable:
-                components["button"] = gr.Button(
-                    "❌", variant="stop", scale=1, **btn_params
-                )
+        field_name = field_name.replace("_", " ").title()
+        fn_params = {
+            "label": "Attribute",
+            "value": field_name,
+            "scale": 2,
+            "interactive": True,
+            **field_name_params,
+        }
+        fv_params = {
+            "label": "Value",
+            "value": field_value,
+            "scale": 8,
+            "interactive": True,
+            **field_value_params,
+        }
+        b_params = {"value": "Delete", "variant": "stop", "scale": 1, **btn_params}
+        with gr.Group():
+            with gr.Row(equal_height=True):
+                components["attribute"] = gr.Textbox(**fn_params)
+                components["value"] = gr.Textbox(**fv_params)
+                if removable:
+                    components["button"] = gr.Button(**b_params)
 
         return components
 
