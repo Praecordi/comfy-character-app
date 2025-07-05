@@ -116,6 +116,7 @@ The JSON file defines all your characters. See `character.example.json` for a te
 
 - `main_subject`: Defining characteristic: "warrior", "man", "woman", "eldritch monster"
 - `face_prompt`: Description of character's face
+- `skin_prompt`: Description of character's skin
 - `hair_prompt`: Description of character's hair
 - `eyes_prompt`: Description of character's eyes
 - `face_reference`: Path (or paths) to reference face image

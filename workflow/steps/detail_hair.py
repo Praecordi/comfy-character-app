@@ -1,6 +1,5 @@
 from comfy_nodes import *
 
-from constants import app_constants
 from workflow.state import WorkflowState
 from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
