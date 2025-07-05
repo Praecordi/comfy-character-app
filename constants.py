@@ -21,14 +21,32 @@ with open(characters_config, encoding="utf-8") as f:
 characters = deepcopy(original_characters)
 
 
-def reset_characters():
+def reset_character(key):
+    global characters
+    if key not in original_characters:
+        del characters[key]
+        return None
+    else:
+        characters[key] = deepcopy(original_characters[key])
+        return key
+
+
+def reset_all_characters():
     global characters
     characters = deepcopy(original_characters)
 
 
-def save_characters():
+def save_character(key):
+    global characters, original_characters
+    original_characters[key] = characters[key]
+
+    with open(characters_config, mode="w", encoding="utf-8") as f:
+        json.dump(characters, f, indent=2)
+
+
+def save_all_characters():
     global characters, original_characters
     with open(characters_config, mode="w", encoding="utf-8") as f:
-        json.dump(characters, f)
+        json.dump(characters, f, indent=2)
 
     original_characters = deepcopy(characters)

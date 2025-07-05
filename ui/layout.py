@@ -3,7 +3,7 @@ import gradio as gr
 import constants
 from workflow.steps import get_steps
 from ui.utils import make_name
-from ui.cm_events import delete_field
+from ui.cm_events import delete_field, update_field
 
 
 class MainLayout:
@@ -402,51 +402,39 @@ class CharacterManagerLayout:
         current_fields = gr.State(value={})
 
         with gr.Row():
-            character_select = gr.Dropdown(
-                label="Select Character",
-                choices=character_choices,
-                value=None,
-                interactive=True,
-            )
+            with gr.Column():
+                character_select = gr.Dropdown(
+                    label="Select Character",
+                    choices=character_choices,
+                    value=None,
+                    interactive=True,
+                )
+                with gr.Row():
+                    save_btn = gr.Button("Save Character", variant="primary")
+                    reset_btn = gr.Button("Reset Character", variant="secondary")
 
-            with gr.Group():
+            with gr.Column():
                 new_char = gr.Textbox(
                     label="New Character Name",
                     placeholder="Enter character name...",
                 )
 
-                new_char_add = gr.Button("Add Character", variant="primary")
+                add_char = gr.Button("Add Character", variant="primary")
 
         with gr.Column():
             face_images = CharacterManagerLayout.create_face_field()
 
             face_prompt = CharacterManagerLayout.create_field(
-                "face",
-                "",
-                removable=False,
-                field_name_params={"interactive": False},
-                field_value_params={"interactive": True},
+                "face", "", removable=False
             )["value"]
             skin_prompt = CharacterManagerLayout.create_field(
-                "skin",
-                "",
-                removable=False,
-                field_name_params={"interactive": False},
-                field_value_params={"interactive": True},
+                "skin", "", removable=False
             )["value"]
             hair_prompt = CharacterManagerLayout.create_field(
-                "hair",
-                "",
-                removable=False,
-                field_name_params={"interactive": False},
-                field_value_params={"interactive": True},
+                "hair", "", removable=False
             )["value"]
             eyes_prompt = CharacterManagerLayout.create_field(
-                "eyes",
-                "",
-                removable=False,
-                field_name_params={"interactive": False},
-                field_value_params={"interactive": True},
+                "eyes", "", removable=False
             )["value"]
 
         gr.Markdown("### Other Fields")
@@ -459,6 +447,11 @@ class CharacterManagerLayout:
             with gr.Column():
                 for i, (key, value) in enumerate(fields.items()):
                     comps = CharacterManagerLayout.create_field(key, value, key=i)
+
+                    comps["value"].change(
+                        update_field,
+                        inputs=[comps["attribute"], comps["value"], character_select],
+                    )
 
                     comps["button"].click(
                         delete_field,
@@ -473,14 +466,10 @@ class CharacterManagerLayout:
                 )
                 add_field_btn = gr.Button("Add Attribute")
 
-        with gr.Row():
-            save_btn = gr.Button("Save All", variant="primary")
-            reset_btn = gr.Button("Reset All", variant="secondary")
-
         return {
             "character_select": character_select,
             "new_character": new_char,
-            "new_character_btn": new_char_add,
+            "add_character_btn": add_char,
             "face_images": face_images,
             "face_prompt": face_prompt,
             "skin_prompt": skin_prompt,
@@ -515,7 +504,7 @@ class CharacterManagerLayout:
             "label": "Attribute",
             "value": field_name,
             "scale": 2,
-            "interactive": True,
+            "interactive": False,
             **attr_params,
             **field_name_params,
         }
