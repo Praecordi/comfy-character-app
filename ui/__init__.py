@@ -8,6 +8,7 @@ from ui.layout import MainLayout, CharacterManagerLayout
 from ui.generator_events import bind_events as bind_generator_events
 from ui.cm_events import bind_events as bind_cm_events
 
+
 class UI:
     def __init__(
         self,
@@ -40,6 +41,6 @@ class UI:
                 demo, main_components, self.runner, self.checkpoints, self.resolutions
             )
 
-            bind_cm_events(cm_components)
+            bind_cm_events(demo, cm_components)
 
         return demo

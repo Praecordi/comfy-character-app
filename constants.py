@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict
 
@@ -15,4 +16,19 @@ comfyui_output = comfyui_installation / "output"
 comfyui_temp = comfyui_installation / "temp"
 
 with open(characters_config, encoding="utf-8") as f:
-    characters = json.load(f)
+    original_characters = json.load(f)
+
+characters = deepcopy(original_characters)
+
+
+def reset_characters():
+    global characters
+    characters = deepcopy(original_characters)
+
+
+def save_characters():
+    global characters, original_characters
+    with open(characters_config, mode="w", encoding="utf-8") as f:
+        json.dump(characters, f)
+
+    original_characters = deepcopy(characters)

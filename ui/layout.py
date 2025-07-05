@@ -1,7 +1,9 @@
 import gradio as gr
 
-from constants import characters
+import constants
 from workflow.steps import get_steps
+from ui.utils import make_name
+from ui.cm_events import delete_field
 
 
 class MainLayout:
@@ -159,7 +161,7 @@ class MainLayout:
     @staticmethod
     def create_character_settings():
         character_choices = [
-            char.replace("_", " ").title() for char in characters.keys()
+            make_name(char) for char in constants.characters.keys()
         ] + ["Custom"]
 
         with gr.Group():
@@ -395,9 +397,7 @@ class CharacterManagerLayout:
 
     @staticmethod
     def create_panel():
-        character_choices = [
-            char.replace("_", " ").title() for char in characters.keys()
-        ]
+        character_choices = [make_name(char) for char in constants.characters.keys()]
 
         current_fields = gr.State(value={})
 
@@ -458,18 +458,24 @@ class CharacterManagerLayout:
         def render_fields(fields):
             with gr.Column():
                 for i, (key, value) in enumerate(fields.items()):
-                    CharacterManagerLayout.create_field(key, value, key=i)
+                    comps = CharacterManagerLayout.create_field(key, value, key=i)
+
+                    comps["button"].click(
+                        delete_field,
+                        inputs=[comps["attribute"], current_fields, character_select],
+                        outputs=[current_fields],
+                    )
 
         with gr.Row():
             with gr.Group():
                 new_field = gr.Textbox(
-                    label="New Field Key", placeholder="Enter new field key"
+                    label="New Attribute", placeholder="Enter new attribute..."
                 )
-                add_field_btn = gr.Button("Add Field")
+                add_field_btn = gr.Button("Add Attribute")
 
-            with gr.Column():
-                save_btn = gr.Button("Save Characters", variant="primary")
-                reset_btn = gr.Button("Reset Characters", variant="secondary")
+        with gr.Row():
+            save_btn = gr.Button("Save All", variant="primary")
+            reset_btn = gr.Button("Reset All", variant="secondary")
 
         return {
             "character_select": character_select,
@@ -504,12 +510,13 @@ class CharacterManagerLayout:
             attr_params, val_params, btn_params = {}, {}, {}
 
         components = {}
-        field_name = field_name.replace("_", " ").title()
+        field_name = make_name(field_name)
         fn_params = {
             "label": "Attribute",
             "value": field_name,
             "scale": 2,
             "interactive": True,
+            **attr_params,
             **field_name_params,
         }
         fv_params = {
@@ -517,6 +524,7 @@ class CharacterManagerLayout:
             "value": field_value,
             "scale": 8,
             "interactive": True,
+            **val_params,
             **field_value_params,
         }
         b_params = {"value": "Delete", "variant": "stop", "scale": 1, **btn_params}
@@ -526,6 +534,8 @@ class CharacterManagerLayout:
                 components["value"] = gr.Textbox(**fv_params)
                 if removable:
                     components["button"] = gr.Button(**b_params)
+                else:
+                    components["button"] = None
 
         return components
 

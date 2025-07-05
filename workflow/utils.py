@@ -1,7 +1,7 @@
 from typing import List, Optional
 import re
 
-from constants import characters
+import constants
 from workflow.state import WorkflowContext
 
 
@@ -50,7 +50,7 @@ def build_conditioning_prompt(
 
 
 def substitute_character_tokens(prompt: str, character_key: str) -> str:
-    char_data = characters[character_key.lower()]
+    char_data = constants.characters[character_key.lower()]
     for token, val in char_data.items():
         if isinstance(val, list):
             val = ", ".join(val)
