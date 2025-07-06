@@ -457,7 +457,7 @@ class CharacterManagerLayout:
 
                     comps["button"].click(
                         delete_field,
-                        inputs=[comps["attribute"], current_fields, character_select],
+                        inputs=[comps["attribute"], character_select],
                         outputs=[current_fields],
                     )
 

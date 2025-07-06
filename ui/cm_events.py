@@ -8,6 +8,15 @@ import constants
 from ui.utils import make_key, make_name
 
 
+def _make_fields(character):
+    char = deepcopy(character)
+
+    for key in ["face_reference", "face", "skin", "hair", "eyes"]:
+        del char[key]
+
+    return char
+
+
 def load_initial():
     character_choices = [
         char.replace("_", " ").title() for char in constants.characters.keys()
@@ -137,7 +146,7 @@ def remove_character(character):
     return gr.update(value=new_choices[0], choices=new_choices)
 
 
-def add_field(attribute, current_fields, character):
+def add_field(attribute, character):
     char_key = make_key(character)
     attr_key = make_key(attribute)
 
@@ -147,32 +156,33 @@ def add_field(attribute, current_fields, character):
 
     if attr_key in constants.characters[char_key]:
         gr.Warning(f"Attribute {attribute} already exists...")
-        return gr.update(value=""), current_fields
+        return gr.update(value=""), gr.update()
 
     if attr_key == "":
         gr.Warning("Please provide non-empty field")
-        return gr.update(value=""), current_fields
-
-    current_fields[attr_key] = ""
+        return gr.update(value=""), gr.update()
 
     constants.characters[char_key][attr_key] = ""
 
-    return gr.update(value=""), current_fields
+    fields = _make_fields(constants.characters[char_key])
+
+    return gr.update(value=""), fields
 
 
-def delete_field(attribute, current_fields, character):
+def delete_field(attribute, character):
     char_key = make_key(character)
     attr_key = make_key(attribute)
 
     if char_key not in constants.characters:
         gr.Warning(f"Character {character} doesn't exist")
-        return current_fields
+        return gr.update()
 
     if attr_key in constants.characters[char_key]:
         del constants.characters[char_key][attr_key]
-        del current_fields[attr_key]
 
-    return current_fields
+    fields = _make_fields(constants.characters[char_key])
+
+    return fields
 
 
 def update_field(attribute, value, character):
@@ -254,21 +264,13 @@ def _bind_buttons(components: Dict[str, gr.Component]):
 
     components["new_field"].submit(
         add_field,
-        inputs=[
-            components["new_field"],
-            components["current_fields"],
-            components["character_select"],
-        ],
+        inputs=[components["new_field"], components["character_select"]],
         outputs=[components["new_field"], components["current_fields"]],
     )
 
     components["add_field_btn"].click(
         add_field,
-        inputs=[
-            components["new_field"],
-            components["current_fields"],
-            components["character_select"],
-        ],
+        inputs=[components["new_field"], components["character_select"]],
         outputs=[components["new_field"], components["current_fields"]],
     )
 
