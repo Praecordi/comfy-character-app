@@ -386,6 +386,7 @@ class CharacterManagerLayout:
                     label="Face Images",
                     type="filepath",
                     file_types=["image"],
+                    columns=4,
                     show_download_button=False,
                     show_fullscreen_button=False,
                     show_share_button=False,
