@@ -1,10 +1,10 @@
 # Character Generation Workflow for ComfyUI with ComfyScript
 
 <div align="center">
-  <image src="./res/strip.webp" alt="Output Example">
+  <image src="./res/teaser.webp" alt="Output Example">
   <figcaption>Example of output for sample character.
   
-  Base Image &rarr; Latent Upscale &rarr; Inpainting Steps (Face, Hair, Eyes) &rarr; Image Upscale &rarr; Remove Background</figcaption>
+  Base Image &rarr; Latent Upscale &rarr; Inpainting Steps (Face, Skin, Hair, Eyes) &rarr; Image Upscale &rarr; Remove Background</figcaption>
 </div>
 
 This project provides a Gradio-based interface for generating consistent character images using ComfyUI. It features a multi-step generation process with specialized controls for character attributes, style transfer, and detail enhancement.
@@ -17,17 +17,25 @@ This project provides a Gradio-based interface for generating consistent charact
 </div>
 
 <div align="center">
-  <image src="./res/ui2.webp" alt="Output Example">
+  <image src="./res/ui2.webp" alt="Options UI">
   <figcaption>Available options for generation</figcaption>
+</div>
+
+<div align="center">
+  <image src="./res/ui3.webp" alt="Character Manager UI">
+  <figcaption>In-build character manager</figcaption>
 </div>
 
 - 🧑‍🎨 Character-focused generation workflow
 - 🎨 Style transfer with reference images
-- 🔍 Detailed enhancement of facial features, hair, and eyes
-- ‍♂️ Multi-stage upscaling (latent and image)
+- 🧬 Multi-step detail enhancement (face, skin, hair, eyes)
+- 🔍 Florence2-based image captioning (for quick prompt generation)
+- 🧑‍💼 Integrated character manager for organizing presets and traits
+- 🖼️ Option to inpaint existing images instead of generating from base
+- ‍♂️ Multi-stage upscaling (latent and final)
 - ⚙️ Customizable generation steps
-- 🖼️ Real-time preview during generation
 - 💾 Persistent UI state across sessions
+- 🖼️ Real-time preview during generation
 
 ## Requirements
 
@@ -43,9 +51,10 @@ This project provides a Gradio-based interface for generating consistent charact
 - [ComfyUI Inspire Pack](https://github.com/ltdrdata/ComfyUI-Inspire-Pack)
 - [ComfyUI InstantID](https://github.com/cubiq/ComfyUI_InstantID)
 - [ComfyUI Essentials](https://github.com/cubiq/ComfyUI_essentials)
+- [ComfyUI Segment Anything](https://github.com/storyicon/comfyui_segment_anything)
 - [Comfyroll Studio](https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes)
 - [ComfyUI Neural Network Latent Upscale](https://github.com/Ttl/ComfyUi_NNLatentUpscale)
-- [ComfyUI ReActor](https://github.com/Gourieff/ComfyUI-ReActor/tree/main)
+- [ComfyUI ReActor](https://github.com/Gourieff/ComfyUI-ReActor)
 - [ComfyUI Detail Daemon](https://github.com/Jonseed/ComfyUI-Detail-Daemon)
 - [ComfyUI Florence2](https://github.com/kijai/ComfyUI-Florence2)
 
@@ -130,10 +139,11 @@ The current generation process (each of which can be toggled) includes:
 1. Base Generation
 2. Iterative Latent Upscale
 3. Face Detail Enhancement
-4. Hair Detail Enhancement
-5. Eyes Detail Enhancement
-6. Image Upscale
-7. Background Removal
+4. Skin Detail Enhancement
+5. Hair Detail Enhancement
+6. Eyes Detail Enhancement
+7. Image Upscale
+8. Background Removal
 
 > [!NOTE]
 > The app currently only works with the SDXL architecture. It also assumes that sdxl checkpoints are placed in a folder called `sdxl/` and pony checkpoints in a folder called `pony/` in your models folder.
@@ -142,6 +152,17 @@ The current generation process (each of which can be toggled) includes:
 
 > [!WARNING]
 > I've only been able to test this on Ubuntu
+
+### Character Manager
+
+The Character Manager tab provides a UI-based editor for managing your character JSON configurations. From this tab, you can:
+
+- View and switch between characters
+- Edit prompts and attributes
+- Assign or preview reference images
+- Save/load configurations persistently
+
+Changes made through the Character Manager are reflected in the current session and saved to the character config file. This dramatically speeds up iteration, especially when balancing multiple characters across a dataset.
 
 ## Contributing
 
