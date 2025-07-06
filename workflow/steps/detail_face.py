@@ -114,7 +114,7 @@ class DetailFaceStep(WorkflowStep):
             image=cropped_image,
             reference=image,
             color_space=ImageColorMatch.color_space.RGB,
-            factor=0.75,
+            factor=0.5,
             reference_mask=mask,
         )
 

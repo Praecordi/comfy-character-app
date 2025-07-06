@@ -29,7 +29,7 @@ class ImageUpscaleStep(WorkflowStep):
                 ip_weight=0.9,
                 cn_strength=0.3,
                 start_at=0.3,
-                end_at=0.8,
+                end_at=0.9,
                 noise=0,
                 combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
                 image_kps=image,
