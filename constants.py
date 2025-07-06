@@ -41,15 +41,15 @@ def save_character(key):
     original_characters[key] = characters[key]
 
     with open(characters_config, mode="w", encoding="utf-8") as f:
-        json.dump(characters, f, indent=2)
+        json.dump(original_characters, f, indent=2)
 
 
 def save_all_characters():
     global characters, original_characters
-    with open(characters_config, mode="w", encoding="utf-8") as f:
-        json.dump(characters, f, indent=2)
-
     original_characters = deepcopy(characters)
+
+    with open(characters_config, mode="w", encoding="utf-8") as f:
+        json.dump(original_characters, f, indent=2)
 
 
 def delete_character(key):
