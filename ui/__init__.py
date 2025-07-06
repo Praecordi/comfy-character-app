@@ -23,10 +23,8 @@ class UI:
         self.runner = WorkflowRunner()
 
     def create_ui(self):
-        with gr.Blocks(
-            title="Character Generator", head_paths=["head.html"]
-        ) as demo:
-            gr.Markdown("# Character Generator")
+        with gr.Blocks(title="Praecordi's Character Generator", head_paths=["head.html"]) as demo:
+            gr.Markdown("# Praecordi's Character Generator")
 
             self.components = MainLayout.create(
                 self.checkpoints, self.resolutions, self.upscalers
