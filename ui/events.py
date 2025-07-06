@@ -188,7 +188,6 @@ def _bind_local_storage(
     resolutions,
 ):
     persist_components = [
-        "input_image",
         "checkpoint",
         "fewsteplora",
         "resolution",
@@ -258,7 +257,7 @@ def _bind_local_storage(
             else gr.update(value="none", interactive=not disable)
         )
         return [
-            state.get("input_image", None),
+            None,
             checkpoint,
             fewsteplora,
             state.get("resolution", resolutions[0][1]),
