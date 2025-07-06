@@ -7,7 +7,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 @register_step
 class DetailEyesStep(WorkflowStep):
     metadata = WorkflowMetadata(label="Eyes Detail", order=5)
-    usebbox = True
+    usebbox = False
     applymask = True
 
     def run(self, state: WorkflowState) -> WorkflowState:

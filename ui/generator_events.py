@@ -168,8 +168,8 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         async for res in runner.generate(dict(zip(generate_inputs, args))):
             yield res
 
-    def generate_caption(*args):
-        return runner.generate_caption(dict(zip(generate_caption_inputs, args)))
+    async def generate_caption(*args):
+        return await runner.generate_caption(dict(zip(generate_caption_inputs, args)))
 
     components["generate"].click(
         generate,
@@ -193,7 +193,6 @@ def _bind_local_storage(
     resolutions,
 ):
     persist_components = [
-        "input_image",
         "checkpoint",
         "fewsteplora",
         "resolution",
@@ -265,7 +264,7 @@ def _bind_local_storage(
             else gr.update(value="none", interactive=not disable)
         )
         return [
-            state.get("input_image", None),
+            None,
             checkpoint,
             fewsteplora,
             state.get("resolution", resolutions[0][1]),

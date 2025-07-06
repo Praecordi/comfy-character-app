@@ -6,8 +6,8 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 @register_step
 class DetailFaceStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Face Detail", order=3)
-    usebbox = True
+    metadata = WorkflowMetadata(label="Face Detail", order=2)
+    usebbox = False
     applymask = True
 
     def apply_face_sampling(self, state):
@@ -110,18 +110,19 @@ class DetailFaceStep(WorkflowStep):
             method=ImageResize_.method.keep_proportion,
         )
 
+        cropped_image = ImageColorMatch(
+            image=cropped_image,
+            reference=image,
+            color_space=ImageColorMatch.color_space.RGB,
+            factor=0.75,
+            reference_mask=mask,
+        )
+
         seg_elt = ImpactEditSEGELT(seg_elt, cropped_image)
         segs = ImpactAssembleSEGS(segs_header, seg_elt)
         detailed = SEGSPaste(image, segs, 30, 255)
 
-        image = ImageColorMatch(
-            image=detailed,
-            reference=image,
-            color_space=ImageColorMatch.color_space.RGB,
-            factor=0.75,
-        )
-
-        detailed = ReActorRestoreFace(
+        image = ReActorRestoreFace(
             detailed,
             ReActorRestoreFace.facedetection.retinaface_resnet50,
             model=ReActorRestoreFace.model.codeformer_v0_1_0,
