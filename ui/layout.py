@@ -419,7 +419,9 @@ class CharacterManagerLayout:
                     placeholder="Enter character name...",
                 )
 
-                add_char = gr.Button("Add Character", variant="primary")
+                with gr.Row():
+                    add_char = gr.Button("Add Character", variant="primary")
+                    remove_char = gr.Button("Remove Character", variant="stop")
 
         with gr.Column():
             face_images = CharacterManagerLayout.create_face_field()
@@ -470,6 +472,7 @@ class CharacterManagerLayout:
             "character_select": character_select,
             "new_character": new_char,
             "add_character_btn": add_char,
+            "remove_character_btn": remove_char,
             "face_images": face_images,
             "face_prompt": face_prompt,
             "skin_prompt": skin_prompt,

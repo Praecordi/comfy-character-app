@@ -62,30 +62,34 @@ def save(character, face_gallery):
     processed_files = []
     face_refs = []
 
-    for file_path in face_gallery:
-        src = Path(file_path[0])
+    if face_gallery:
+        for file_path in face_gallery:
+            src = Path(file_path[0])
 
-        if src.parent == constants.comfyui_input:
-            processed_files.append(str(src))
-            face_refs.append(src.name)
-            continue
+            if src.parent == constants.comfyui_input:
+                processed_files.append(str(src))
+                face_refs.append(src.name)
+                continue
 
-        dest_name = src.name
-        dest_path = constants.comfyui_input / dest_name
-        counter = 1
-
-        while dest_path.exists():
-            stem = src.stem
-            suffix = src.suffix
-            dest_name = f"{stem}_{counter}{suffix}"
+            dest_name = src.name
             dest_path = constants.comfyui_input / dest_name
-            counter += 1
+            counter = 1
 
-        shutil.move(str(src), str(dest_path))
-        processed_files.append(str(dest_path))
-        face_refs.append(dest_name)
+            while dest_path.exists():
+                stem = src.stem
+                suffix = src.suffix
+                dest_name = f"{stem}_{counter}{suffix}"
+                dest_path = constants.comfyui_input / dest_name
+                counter += 1
 
-    constants.characters[char_key]["face_reference"] = face_refs
+            shutil.move(str(src), str(dest_path))
+            processed_files.append(str(dest_path))
+            face_refs.append(dest_name)
+
+        constants.characters[char_key]["face_reference"] = face_refs
+    else:
+        constants.characters[char_key]["face_reference"] = []
+
     constants.save_character(char_key)
 
     return processed_files
@@ -119,6 +123,18 @@ def add_character(character):
     return gr.update(value=""), gr.update(
         value=make_name(char_key), choices=new_choices
     )
+
+
+def remove_character(character):
+    char_key = make_key(character)
+
+    constants.delete_character(char_key)
+
+    new_choices = [
+        char.replace("_", " ").title() for char in constants.characters.keys()
+    ]
+
+    return gr.update(value=new_choices[0], choices=new_choices)
 
 
 def add_field(attribute, current_fields, character):
@@ -228,6 +244,12 @@ def _bind_buttons(components: Dict[str, gr.Component]):
         add_character,
         inputs=[components["new_character"]],
         outputs=[components["new_character"], components["character_select"]],
+    )
+
+    components["remove_character_btn"].click(
+        remove_character,
+        inputs=[components["character_select"]],
+        outputs=[components["character_select"]],
     )
 
     components["new_field"].submit(

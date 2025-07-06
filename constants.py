@@ -50,3 +50,12 @@ def save_all_characters():
         json.dump(characters, f, indent=2)
 
     original_characters = deepcopy(characters)
+
+
+def delete_character(key):
+    global characters, original_characters
+    del characters[key]
+    del original_characters[key]
+
+    with open(characters_config, mode="w", encoding="utf-8") as f:
+        json.dump(original_characters, f, indent=2)
