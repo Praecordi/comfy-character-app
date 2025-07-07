@@ -6,7 +6,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 @register_step
 class DetailSkinStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Skin Detail", order=3)
+    metadata = WorkflowMetadata(label="Skin Detail", order=2)
     usebbox = False
     applymask = True
 
@@ -78,30 +78,6 @@ class DetailSkinStep(WorkflowStep):
                 method=ImageResize_.method.keep_proportion,
             )
 
-        if ctx.swap_method == "instantid":
-            model, positive, negative = ApplyInstantIDAdvanced(
-                instantid=ctx.instantid,
-                insightface=ctx.faceanalysis,
-                control_net=ctx.instantid_cn,
-                image=ctx.face_image,
-                model=ctx.model,
-                positive=ctx.skin_conditioning,
-                negative=ctx.negative_conditioning,
-                ip_weight=0.9,
-                cn_strength=0.3,
-                start_at=0.3,
-                end_at=0.9,
-                noise=0,
-                combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
-                image_kps=image,
-            )
-        else:
-            model, positive, negative = (
-                ctx.model,
-                ctx.skin_conditioning,
-                ctx.negative_conditioning,
-            )
-
         model = DifferentialDiffusion(ctx.model)
 
         cropped_mask = GrowMask(cropped_mask, expand=30)
@@ -113,8 +89,8 @@ class DetailSkinStep(WorkflowStep):
             latent=cropped_latent,
             scale=1.6,
             model=model,
-            positive=positive,
-            negative=negative,
+            positive=ctx.skin_conditioning,
+            negative=ctx.negative_conditioning,
             steps=ctx.steps["detail_skin"],
             cfg=self._scale_cfg(ctx.cfg["detail_skin"]),
             denoise=(0.7, 0.6),

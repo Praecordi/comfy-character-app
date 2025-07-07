@@ -6,7 +6,7 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 @register_step
 class DetailFaceStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Face Detail", order=2)
+    metadata = WorkflowMetadata(label="Face Detail", order=3)
     usebbox = False
     applymask = True
 
@@ -26,7 +26,7 @@ class DetailFaceStep(WorkflowStep):
 
         segs = MaskToSEGS(
             mask=mask,
-            combined=False,
+            combined=True,
             crop_factor=3,
             bbox_fill=False,
             drop_size=10,
