@@ -517,6 +517,7 @@ class CharacterManagerLayout:
             "value": field_value,
             "scale": 8,
             "interactive": True,
+            "elem_classes": ["attention-editable"],
             **val_params,
             **field_value_params,
         }
