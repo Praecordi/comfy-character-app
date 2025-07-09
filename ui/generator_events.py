@@ -6,7 +6,7 @@ import json
 from comfy_nodes import queue
 from constants import characters, comfyui_input, comfyui_output
 from utils import make_character_description, make_name, make_key
-from ui import PREVIEW_REFRESH_RATE
+from ui import PREVIEW_REFRESH_RATE, OUTPUT_REFRESH_RATE
 from ui.runner import WorkflowRunner
 
 from workflow.steps import get_steps
@@ -25,6 +25,7 @@ def bind_events(
     _bind_buttons(components, runner)
     _bind_local_storage(block, components, checkpoints, resolutions)
     _bind_preview_refresh(components, runner)
+    _bind_output_gallery(components, runner)
 
 
 def on_character_change(character, character_state):
@@ -210,22 +211,19 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "negative_prompt",
         "character",
     ]
-    generate_outputs = ["output", "output_text"]
 
     generate_caption_inputs = ["input_image"]
     generate_caption_outputs = ["positive_prompt"]
 
-    async def generate(*args):
-        async for res in runner.generate(dict(zip(generate_inputs, args))):
-            yield res
+    async def queue(*args):
+        await runner.queue(dict(zip(generate_inputs, args)))
 
     async def generate_caption(*args):
         return await runner.generate_caption(dict(zip(generate_caption_inputs, args)))
 
-    components["generate"].click(
-        generate,
+    components["queue"].click(
+        queue,
         inputs=[components[x] for x in generate_inputs],
-        outputs=[components[x] for x in generate_outputs],
     )
 
     components["interrupt"].click(runner.interrupt)
@@ -392,3 +390,16 @@ def _bind_preview_refresh(components: Dict[str, gr.Component], runner: WorkflowR
                 return gr.update()
 
     components["preview"].attach_load_event(get_preview, every=PREVIEW_REFRESH_RATE)
+
+
+def _bind_output_gallery(components: Dict[str, gr.Component], runner: WorkflowRunner):
+    components["gallery_state"].attach_load_event(
+        runner.get_task, every=OUTPUT_REFRESH_RATE
+    )
+
+    def update_gallery_index(evt: gr.SelectData):
+        return evt.index
+
+    components["output"].select(
+        update_gallery_index, outputs=[components["gallery_index"]]
+    )

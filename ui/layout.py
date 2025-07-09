@@ -77,15 +77,15 @@ class MainLayout:
     @staticmethod
     def create_buttons():
         with gr.Row():
-            generate_btn = gr.Button(
-                "Generate (Ctrl-ENTER)", variant="primary", elem_id="generate-btn"
+            queue_btn = gr.Button(
+                "Queue (Ctrl-ENTER)", variant="primary", elem_id="generate-btn"
             )
             interrupt_btn = gr.Button(
                 "Interrupt (Ctrl-Shift-ENTER)", variant="stop", elem_id="interrupt-btn"
             )
 
         return {
-            "generate": generate_btn,
+            "queue": queue_btn,
             "interrupt": interrupt_btn,
         }
 
@@ -140,11 +140,28 @@ class MainLayout:
 
     @staticmethod
     def create_output_panel():
+        gallery_index = gr.State(value=0)
+        gallery_state = gr.State(value=[])
+
+        def get_gallery(state):
+            result = []
+            for tup in state:
+                result.append((tup[0], tup[1]))
+            return result
+
+        def get_text(state, index):
+            if index >= len(state):
+                return ""
+            else:
+                return state[index][2]
+
         with gr.Group():
             with gr.Accordion("Output (Alt-O)", open=False, elem_id="output-acrdn"):
                 with gr.Row(equal_height=True):
                     with gr.Column(scale=3):
                         output_gallery = gr.Gallery(
+                            value=get_gallery,
+                            inputs=[gallery_state],
                             label="Output Images",
                             format="png",
                             columns=5,
@@ -159,7 +176,11 @@ class MainLayout:
                         )
 
                         output_text = gr.Textbox(
-                            interactive=False, lines=7, show_label=False
+                            value=get_text,
+                            inputs=[gallery_state, gallery_index],
+                            interactive=False,
+                            lines=7,
+                            show_label=False,
                         )
 
                     preview = gr.Image(
@@ -170,10 +191,11 @@ class MainLayout:
                     )
 
         return {
+            "gallery_index": gallery_index,
+            "gallery_state": gallery_state,
             "output": output_gallery,
             "output_text": output_text,
             "preview": preview,
-            # "preview_text": preview_text,
         }
 
     @staticmethod

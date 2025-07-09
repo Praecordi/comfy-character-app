@@ -2,6 +2,7 @@ from typing import List, Tuple
 import gradio as gr
 
 PREVIEW_REFRESH_RATE = 0.5
+OUTPUT_REFRESH_RATE = 0.5
 
 from ui.runner import WorkflowRunner
 from ui.layout import MainLayout, CharacterManagerLayout
@@ -26,7 +27,9 @@ class UI:
         self.runner = WorkflowRunner()
 
     def create_ui(self):
-        with gr.Blocks(title="Praecordi's Character Generator", head_paths=["head.html"]) as demo:
+        with gr.Blocks(
+            title="Praecordi's Character Generator", head_paths=["head.html"]
+        ) as demo:
             gr.Markdown("# Praecordi's Character Generator")
 
             with gr.Tab("Generator"):
