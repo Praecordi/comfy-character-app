@@ -175,13 +175,17 @@ class MainLayout:
                             show_fullscreen_button=True,
                         )
 
-                        output_text = gr.Textbox(
-                            value=get_text,
-                            inputs=[gallery_state, gallery_index],
-                            interactive=False,
-                            lines=7,
-                            show_label=False,
-                        )
+                        with gr.Row():
+                            output_text = gr.Textbox(
+                                value=get_text,
+                                inputs=[gallery_state, gallery_index],
+                                interactive=False,
+                                lines=7,
+                                show_label=False,
+                                scale=8,
+                            )
+
+                            reset_gallery_btn = gr.Button("Reset Gallery", scale=1)
 
                     preview = gr.Image(
                         label="Preview",
@@ -193,6 +197,7 @@ class MainLayout:
         return {
             "gallery_index": gallery_index,
             "gallery_state": gallery_state,
+            "reset_gallery_btn": reset_gallery_btn,
             "output": output_gallery,
             "output_text": output_text,
             "preview": preview,

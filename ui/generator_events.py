@@ -393,8 +393,18 @@ def _bind_preview_refresh(components: Dict[str, gr.Component], runner: WorkflowR
 
 
 def _bind_output_gallery(components: Dict[str, gr.Component], runner: WorkflowRunner):
+    async def accumulate_state(state):
+        result_tuple = await runner.get_task()
+
+        if result_tuple:
+            state += [result_tuple]
+
+        return state
+
     components["gallery_state"].attach_load_event(
-        runner.get_task, every=OUTPUT_REFRESH_RATE
+        accumulate_state,
+        every=OUTPUT_REFRESH_RATE,
+        inputs=[components["gallery_state"]],
     )
 
     def update_gallery_index(evt: gr.SelectData):
@@ -402,4 +412,12 @@ def _bind_output_gallery(components: Dict[str, gr.Component], runner: WorkflowRu
 
     components["output"].select(
         update_gallery_index, outputs=[components["gallery_index"]]
+    )
+
+    def reset_gallery():
+        return []
+
+    components["reset_gallery_btn"].click(
+        reset_gallery,
+        outputs=[components["gallery_state"]],
     )

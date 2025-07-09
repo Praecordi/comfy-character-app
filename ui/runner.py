@@ -17,7 +17,6 @@ class WorkflowRunner:
 
         self._task_queue = Queue()
         self._task_lock = Lock()
-        self.results_list = []
         self._current_id = 0
 
     def _push_preview(self, task, node_id, image):
@@ -92,18 +91,14 @@ class WorkflowRunner:
 
             image_size = image[0].size
 
-            self.results_list += [
-                (
-                    image[0],
-                    f"Generation {id} - {char}: {label} ({image_size[0]} x {image_size[1]})",
-                    out_text,
-                )
-            ]
-
-            return self.results_list
+            return (
+                image[0],
+                f"Generation {id} - {char}: {label} ({image_size[0]} x {image_size[1]})",
+                out_text,
+            )
         except Empty:
             self._stop_event.set()
-            return self.results_list
+            return None
         except TypeError as t:
             print("Workflow interrupted, moving on to next item")
-            return self.results_list
+            return None
