@@ -127,6 +127,18 @@ def _bind_image_triggers(components: Dict[str, gr.Component]):
         outputs=[components[x] for x in style_outputs],
     )
 
+    def on_style_enable(enabled):
+        if enabled:
+            return gr.update(interactive=True)
+        else:
+            return gr.update(interactive=False)
+
+    components["enable_style"].change(
+        on_style_enable,
+        inputs=[components["enable_style"]],
+        outputs=[components["style_prompt"]],
+    )
+
 
 def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     generate_inputs = [

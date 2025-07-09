@@ -50,10 +50,28 @@ class MainLayout:
                 "Invisible Button", scale=1, elem_id="invisible", interactive=False
             )
 
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=6):
+                enable_style = gr.Checkbox(label="Enable Style Prompt")
+
+                style_prompt = gr.Textbox(
+                    label="Style Prompt",
+                    lines=4,
+                    placeholder="Enter style prompt to append to positive prompt...",
+                    elem_classes=["attention-editable"],
+                    interactive=True,
+                )
+
+            gr.Button(
+                "Invisible Button", scale=1, elem_id="invisible", interactive=False
+            )
+
         return {
             "positive_prompt": positive_prompt,
             "negative_prompt": negative_prompt,
             "auto_caption": auto_caption,
+            "enable_style": enable_style,
+            "style_prompt": style_prompt,
         }
 
     @staticmethod
@@ -275,15 +293,6 @@ class MainLayout:
 
         with gr.Group():
             gr.Markdown("Control Net and Style Settings", container=True)
-            enable_style = gr.Checkbox(label="Enable Style Prompt")
-
-            style_prompt = gr.Textbox(
-                label="Style Prompt",
-                lines=4,
-                placeholder="Enter style prompt to append to positive prompt...",
-                elem_classes=["attention-editable"],
-                interactive=True,
-            )
 
             with gr.Row(equal_height=True):
                 with gr.Accordion(
@@ -326,8 +335,6 @@ class MainLayout:
             "fewsteplora": fewsteplora,
             "resolution": resolution,
             "upscaler": upscaler,
-            "enable_style": enable_style,
-            "style_prompt": style_prompt,
             "use_detail_daemon": use_detail_daemon,
             "controlnet_image": cn_image,
             "controlnet_strength": cn_strength,
