@@ -1,11 +1,12 @@
 import random
 from threading import Event, Lock
-import gradio as gr
+from queue import Queue, Empty
 
 from comfy_nodes import queue
 from workflow.core import CharacterWorkflow
 from workflow.caption import CaptionWorkflow
 from workflow.utils import make_output_text
+from ui.utils import make_name
 
 
 class WorkflowRunner:
@@ -15,7 +16,12 @@ class WorkflowRunner:
         self._stop_event = Event()
         self._stop_wf = False
 
-    def _push(self, task, node_id, image):
+        self._task_queue = Queue()
+        self._task_lock = Lock()
+        self.results_list = []
+        self._current_id = 0
+
+    def _push_preview(self, task, node_id, image):
         with self._preview_lock:
             self._latest_preview = image
 
@@ -23,10 +29,8 @@ class WorkflowRunner:
         with self._preview_lock:
             self._latest_preview = None
 
-    async def generate(self, in_state: dict):
-        self._reset_preview()
-        self._stop_event.clear()
-
+    async def queue(self, in_state: dict):
+        char = make_name(in_state["character"])
         in_state["base_seed"] = (
             random.randint(0, 1e10)
             if in_state["base_seed"] == -1
@@ -37,33 +41,20 @@ class WorkflowRunner:
             if in_state["perturb_seed"] == -1
             else in_state["perturb_seed"]
         )
-        in_state["preview_callback"] = self._push
 
         wf = CharacterWorkflow(in_state)
 
-        res_agg = []
-
         out_text = make_output_text(wf.ctx)
 
-        yield gr.update(), out_text
+        result_list = await wf.queue(in_state["process_controller"])
 
-        try:
-            async for result, label in wf.generate(in_state["process_controller"]):
-                if result is not None:
-                    image = await result
-                    image_size = image[0].size
+        for result, label in result_list:
+            with self._task_lock:
+                self._task_queue.put_nowait(
+                    (result, char, label, self._current_id, out_text)
+                )
 
-                    res_agg += [
-                        (image[0], f"{label} ({image_size[0]} x {image_size[1]})")
-                    ]
-
-                    yield gr.update(value=res_agg), gr.update()
-                else:
-                    yield gr.update(), gr.update()
-        except IndexError:
-            yield gr.update(value=res_agg), gr.update()
-        finally:
-            self._stop_event.set()
+        self._current_id += 1
 
     async def generate_caption(self, in_state: dict):
         wf = CaptionWorkflow(in_state)
@@ -83,3 +74,33 @@ class WorkflowRunner:
 
         with self._preview_lock:
             return (self._latest_preview, "running")
+
+    async def get_task(self):
+        try:
+            with self._task_lock:
+                _result, char, label, id, out_text = self._task_queue.get_nowait()
+
+            self._reset_preview()
+            self._stop_event.clear()
+            _result.task.add_preview_callback(self._push_preview)
+            result = await _result
+            _result.task.remove_preview_callback(self._push_preview)
+            image = await result
+
+            image_size = image[0].size
+
+            self.results_list += [
+                (
+                    image[0],
+                    f"Generation {id} - {char}: {label} ({image_size[0]} x {image_size[1]})",
+                    out_text,
+                )
+            ]
+
+            return self.results_list
+        except Empty:
+            self._stop_event.set()
+            return self.results_list
+        except TypeError as t:
+            print("Workflow interrupted, moving on to next item")
+            return self.results_list
