@@ -57,18 +57,33 @@ This project provides a Gradio-based interface for generating consistent charact
 - [ComfyUI ReActor](https://github.com/Gourieff/ComfyUI-ReActor)
 - [ComfyUI Detail Daemon](https://github.com/Jonseed/ComfyUI-Detail-Daemon)
 - [ComfyUI Florence2](https://github.com/kijai/ComfyUI-Florence2)
+- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript)
+
+### Required Models
+
+- [Xinsir's ControlNet Union Promax](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promax.safetensors?download=true) in `ComfyUI/models/controlnet`
+- [InstantID model](https://huggingface.co/InstantX/InstantID/resolve/main/ip-adapter.bin?download=true) in `ComfyUI/models/instantid`
+- [InstantID ControlNet](https://huggingface.co/InstantX/InstantID/resolve/main/ControlNetModel/diffusion_pytorch_model.safetensors?download=true) in `ComfyUI/models/controlnet`
+- [LCM Lora](https://huggingface.co/latent-consistency/lcm-lora-sdxl/resolve/main/pytorch_lora_weights.safetensors?download=true) in `ComfyUI/models/loras`
+- Any of the [Turbo Lora](https://huggingface.co/shiroppo/sd_xl_turbo_lora/tree/main) in `ComfyUI/models/loras`
+- [DPO Turbo Lora](https://huggingface.co/radames/sdxl-turbo-DPO-LoRA/resolve/main/pytorch_lora_weights-sdxl-turbo-comfyui.safetensors?download=true) in `ComfyUI/models/loras`
+
+> [!NOTE]
+> Make sure to place them in the proper folder. You can rename any of these files, but make sure to update the config with the correct names.
 
 ## Installation
 
-1. Activate your ComfyUI virtual environment
+1. Navigate to your ComfyUI folder and activate your ComfyUI virtual environment
 
 ```bash
+cd path/to/comfyui
 source .venv/bin/activate
 ```
 
 or
 
 ```cmd
+cd path/to/comfyui
 .venv/Scripts/activate
 ```
 
