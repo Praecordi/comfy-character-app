@@ -6,7 +6,7 @@ import constants
 
 from ui import PREVIEW_REFRESH_RATE
 from ui.runner import WorkflowRunner
-from ui.utils import make_character_description
+from ui.utils import make_character_description, make_name, make_key
 
 from workflow.steps import get_steps
 
@@ -37,7 +37,10 @@ def on_character_change(character):
             gr.update(value=""),
         )
     else:
-        char_key = character.lower()
+        char_key = make_key(character)
+        if char_key not in constants.characters:
+            char_key = list(constants.characters.keys())[0]
+
         if isinstance(constants.characters[char_key]["face_reference"], list):
             reference = [
                 str(constants.comfyui_input / ref)
@@ -60,7 +63,7 @@ def on_character_change(character):
                 value=reference,
                 interactive=False,
             ),
-            gr.update(value=make_character_description(character)),
+            gr.update(value=make_character_description(make_name(char_key))),
         )
 
 

@@ -2,10 +2,10 @@ import constants
 
 
 def make_character_description(character):
-    if character == "Custom":
+    char_key = make_key(character)
+    if char_key == "custom" or char_key not in constants.characters:
         return ""
     else:
-        char_key = character.lower()
         char_dict = constants.characters[char_key]
 
         desc = "\n".join([f"- **{{{key}}}**" for key in char_dict.keys()])
