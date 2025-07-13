@@ -64,6 +64,7 @@ This project provides a Gradio-based interface for generating consistent charact
 - [Xinsir's ControlNet Union Promax](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promax.safetensors?download=true) in `ComfyUI/models/controlnet`
 - [InstantID model](https://huggingface.co/InstantX/InstantID/resolve/main/ip-adapter.bin?download=true) in `ComfyUI/models/instantid`
 - [InstantID ControlNet](https://huggingface.co/InstantX/InstantID/resolve/main/ControlNetModel/diffusion_pytorch_model.safetensors?download=true) in `ComfyUI/models/controlnet`
+- [VIT-H SAM Model](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth) in `ComfyUI/models/sams`
 - [LCM Lora](https://huggingface.co/latent-consistency/lcm-lora-sdxl/resolve/main/pytorch_lora_weights.safetensors?download=true) in `ComfyUI/models/loras`
 - Any of the [Turbo Lora](https://huggingface.co/shiroppo/sd_xl_turbo_lora/tree/main) in `ComfyUI/models/loras`
 - [DPO Turbo Lora](https://huggingface.co/radames/sdxl-turbo-DPO-LoRA/resolve/main/pytorch_lora_weights-sdxl-turbo-comfyui.safetensors?download=true) in `ComfyUI/models/loras`

@@ -138,7 +138,7 @@ class CharacterWorkflow:
         )
 
         sam_model = csn.SAMLoader(
-            csn.SAMLoader.model_name.sam_vit_h,
+            csn.SAMLoader.model_name.sam_vit_h_4b8939,
             device_mode=csn.SAMLoader.device_mode.Prefer_GPU,
         )
 
