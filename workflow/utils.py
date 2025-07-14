@@ -3,6 +3,7 @@ import re
 
 import constants
 from workflow.state import WorkflowContext
+from ui.utils import make_key
 
 
 def make_output_text(ctx: WorkflowContext):
@@ -49,8 +50,8 @@ def build_conditioning_prompt(
     return ", ".join(parts)
 
 
-def substitute_character_tokens(prompt: str, character_key: str) -> str:
-    char_data = constants.characters[character_key.lower()]
+def substitute_character_tokens(prompt: str, character: str) -> str:
+    char_data = constants.characters[make_key(character)]
     for token, val in char_data.items():
         if isinstance(val, list):
             val = ", ".join(val)
