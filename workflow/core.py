@@ -107,7 +107,7 @@ class CharacterWorkflow:
                 )
                 sampler_name = csn.Samplers.lcm
                 scheduler_name = csn.Schedulers.sgm_uniform
-                steps, cfg = self.generate_scaled_config(8, 2)
+                steps, cfg = self._generate_scaled_config(8, 2)
             else:
                 sampler_name = csn.Samplers.dpmpp_2m_sde_gpu
                 scheduler_name = csn.Schedulers.karras
