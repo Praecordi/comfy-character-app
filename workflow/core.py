@@ -105,7 +105,7 @@ class CharacterWorkflow:
                 )
                 sampler_name = csn.Samplers.lcm
                 scheduler_name = csn.Schedulers.sgm_uniform
-                steps, cfg = self.generate_scaled_config(8, 2)
+                steps, cfg = self._generate_scaled_config(8, 2)
             else:
                 sampler_name = csn.Samplers.dpmpp_2m_sde_gpu
                 scheduler_name = csn.Schedulers.karras
@@ -136,7 +136,7 @@ class CharacterWorkflow:
         )
 
         sam_model = csn.SAMLoader(
-            csn.SAMLoader.model_name.sam_vit_h,
+            csn.SAMLoader.model_name.sam_vit_h_4b8939,
             device_mode=csn.SAMLoader.device_mode.Prefer_GPU,
         )
 
@@ -240,12 +240,12 @@ class CharacterWorkflow:
         neg = ", ".join(neg)
 
         face = build_conditioning_prompt(
-            f"{{main_subject}}, {face_prompt}" or "",
+            f"{{base}}, {face_prompt}" or "",
             style_prompt if apply_style else None,
             apply_scores,
         )
         skin = build_conditioning_prompt(
-            f"{{main_subject}}, {skin_prompt}" or "",
+            f"{{base}}, {skin_prompt}" or "",
             style_prompt if apply_style else None,
             apply_scores,
         )

@@ -36,12 +36,13 @@ def on_character_change(character: str):
     else:
         face_images = [str(constants.comfyui_input / face_images)]
 
+    base_prompt = char_dict.pop("base", "")
     face_prompt = char_dict.pop("face", "")
     skin_prompt = char_dict.pop("skin", "")
     hair_prompt = char_dict.pop("hair", "")
     eyes_prompt = char_dict.pop("eyes", "")
 
-    return char_dict, face_images, face_prompt, skin_prompt, hair_prompt, eyes_prompt
+    return char_dict, face_images, base_prompt, face_prompt, skin_prompt, hair_prompt, eyes_prompt
 
 
 def reset(character):
@@ -117,6 +118,7 @@ def add_character(character):
 
     char_dict = {
         "face_reference": [],
+        "base": "",
         "face": "",
         "skin": "",
         "hair": "",
@@ -209,6 +211,7 @@ def _bind_character_change(components: Dict[str, gr.Component]):
     output_keys = [
         "current_fields",
         "face_images",
+        "base_prompt",
         "face_prompt",
         "skin_prompt",
         "hair_prompt",
@@ -227,6 +230,7 @@ def _bind_buttons(components: Dict[str, gr.Component]):
         "character_select",
         "current_fields",
         "face_images",
+        "base_prompt",
         "face_prompt",
         "skin_prompt",
         "hair_prompt",
@@ -276,6 +280,11 @@ def _bind_buttons(components: Dict[str, gr.Component]):
 
 
 def _bind_attribute_changes(components: Dict[str, gr.Component]):
+    components["base_prompt"].change(
+        lambda value, char: update_field("base", value, char),
+        inputs=[components["base_prompt"], components["character_select"]],
+    )
+
     components["face_prompt"].change(
         lambda value, char: update_field("face", value, char),
         inputs=[components["face_prompt"], components["character_select"]],

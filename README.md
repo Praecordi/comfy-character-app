@@ -57,18 +57,34 @@ This project provides a Gradio-based interface for generating consistent charact
 - [ComfyUI ReActor](https://github.com/Gourieff/ComfyUI-ReActor)
 - [ComfyUI Detail Daemon](https://github.com/Jonseed/ComfyUI-Detail-Daemon)
 - [ComfyUI Florence2](https://github.com/kijai/ComfyUI-Florence2)
+- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript)
+
+### Required Models
+
+- [Xinsir's ControlNet Union Promax](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promax.safetensors?download=true) in `ComfyUI/models/controlnet`
+- [InstantID model](https://huggingface.co/InstantX/InstantID/resolve/main/ip-adapter.bin?download=true) in `ComfyUI/models/instantid`
+- [InstantID ControlNet](https://huggingface.co/InstantX/InstantID/resolve/main/ControlNetModel/diffusion_pytorch_model.safetensors?download=true) in `ComfyUI/models/controlnet`
+- [VIT-H SAM Model](https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth) in `ComfyUI/models/sams`
+- [LCM Lora](https://huggingface.co/latent-consistency/lcm-lora-sdxl/resolve/main/pytorch_lora_weights.safetensors?download=true) in `ComfyUI/models/loras`
+- Any of the [Turbo Lora](https://huggingface.co/shiroppo/sd_xl_turbo_lora/tree/main) in `ComfyUI/models/loras`
+- [DPO Turbo Lora](https://huggingface.co/radames/sdxl-turbo-DPO-LoRA/resolve/main/pytorch_lora_weights-sdxl-turbo-comfyui.safetensors?download=true) in `ComfyUI/models/loras`
+
+> [!NOTE]
+> Make sure to place them in the proper folder. You can rename any of these files, but make sure to update the config with the correct names.
 
 ## Installation
 
-1. Activate your ComfyUI virtual environment
+1. Navigate to your ComfyUI folder and activate your ComfyUI virtual environment
 
 ```bash
+cd path/to/comfyui
 source .venv/bin/activate
 ```
 
 or
 
 ```cmd
+cd path/to/comfyui
 .venv/Scripts/activate
 ```
 
@@ -123,11 +139,11 @@ python main.py
 
 The JSON file defines all your characters. See `character.example.json` for a template. The required components for each character include:
 
-- `main_subject`: Defining characteristic: "warrior", "man", "woman", "eldritch monster"
-- `face_prompt`: Description of character's face
-- `skin_prompt`: Description of character's skin
-- `hair_prompt`: Description of character's hair
-- `eyes_prompt`: Description of character's eyes
+- `base`: Defining characteristic: "warrior", "man", "woman", "eldritch monster"
+- `face`: Description of character's face
+- `skin`: Description of character's skin
+- `hair`: Description of character's hair
+- `eyes`: Description of character's eyes
 - `face_reference`: Path (or paths) to reference face image
 
 Additional attributes can be added which can then be used in the prompt template.

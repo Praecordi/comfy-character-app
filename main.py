@@ -8,7 +8,7 @@ from constants import comfyui_input, comfyui_output, comfyui_temp
 ui_checkpoints = [
     (str(x)[str(x).find("/") + 1 :].replace(".safetensors", ""), str(x))
     for x in Checkpoints
-    if str(x).startswith("sdxl") or str(x).startswith("pony")
+    if str(x).lower().startswith("sdxl") or str(x).lower().startswith("pony")
 ]
 
 ui_resolutions = [
