@@ -58,13 +58,13 @@
   }
 
   function setupAttentionEditing() {
+    var textQuery =
+      ".attention-editable textarea, .attention-editable input[type=text]";
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            const textareas = node.querySelectorAll(
-              ".attention-editable textarea"
-            );
+            const textareas = node.querySelectorAll(textQuery);
             textareas.forEach((textarea) => {
               if (!textarea.dataset.attentionBound) {
                 textarea.addEventListener("keydown", handleAttentionKeydown);
@@ -81,12 +81,10 @@
       subtree: true,
     });
 
-    document
-      .querySelectorAll(".attention-editable textarea")
-      .forEach((textarea) => {
-        textarea.addEventListener("keydown", handleAttentionKeydown);
-        textarea.dataset.attentionBound = "true";
-      });
+    document.querySelectorAll(textQuery).forEach((textarea) => {
+      textarea.addEventListener("keydown", handleAttentionKeydown);
+      textarea.dataset.attentionBound = "true";
+    });
   }
 
   function handleAttentionKeydown(event) {
