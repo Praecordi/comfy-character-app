@@ -1,5 +1,6 @@
 {
   "lara_croft": {
+    "base": "young adventurer",
     "skin": "light brown skin",
     "hair": "braided brown hair, intricate details, slightly messy",
     "eyes": "determined green eyes, sharp gaze, detailed eyelashes",
@@ -11,6 +12,7 @@
     "environment": "jungle ruins background"
   },
   "aloy": {
+    "base": "25yo tribal woman",
     "skin": "light skin, freckled",
     "hair": "red hair with tribal braids, slightly windswept",
     "eyes": "intense hazel eyes, focused expression",
@@ -22,6 +24,7 @@
     "environment": "post-apocalyptic wilderness"
   },
   "yennefer": {
+    "base": "beautiful regal sorceress",
     "skin": "pale smooth skin",
     "hair": "raven black wavy hair, voluminous",
     "eyes": "mysterious violet eyes, intense gaze",

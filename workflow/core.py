@@ -242,12 +242,12 @@ class CharacterWorkflow:
         neg = ", ".join(neg)
 
         face = build_conditioning_prompt(
-            f"{{main_subject}}, {face_prompt}" or "",
+            f"{{base}}, {face_prompt}" or "",
             style_prompt if apply_style else None,
             apply_scores,
         )
         skin = build_conditioning_prompt(
-            f"{{main_subject}}, {skin_prompt}" or "",
+            f"{{base}}, {skin_prompt}" or "",
             style_prompt if apply_style else None,
             apply_scores,
         )

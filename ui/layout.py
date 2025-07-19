@@ -434,6 +434,9 @@ class CharacterManagerLayout:
         with gr.Column():
             face_images = CharacterManagerLayout.create_face_field()
 
+            base_prompt = CharacterManagerLayout.create_field(
+                "base", "", removable=False
+            )["value"]
             face_prompt = CharacterManagerLayout.create_field(
                 "face", "", removable=False
             )["value"]
@@ -482,6 +485,7 @@ class CharacterManagerLayout:
             "add_character_btn": add_char,
             "remove_character_btn": remove_char,
             "face_images": face_images,
+            "base_prompt": base_prompt,
             "face_prompt": face_prompt,
             "skin_prompt": skin_prompt,
             "hair_prompt": hair_prompt,
