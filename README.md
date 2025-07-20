@@ -37,6 +37,20 @@ This project provides a Gradio-based interface for generating consistent charact
 - 💾 Persistent UI state across sessions
 - 🖼️ Real-time preview during generation
 
+## To-Do / Upcoming
+
+- [ ] Better Process Controller
+  - Allow users to build the process themselves rather than just toggle steps on/off.
+- [ ] Queue generations
+  - Need to setup queueing
+  - Build UI for queue.
+  - Allow canceling of queued workflows (Difficult because this interferes with ComfyUI's queueing)
+- [ ] A more flexible hair inpainting
+  - Currently hair in-painting keeps to the shape set by the base generation. Rather we want to be able to replace the hair completely.
+  - Solution is to allow in-painting of hair+background, then paint the parts that are part of the background or body.
+- [ ] More steps in process (?)
+  - If anyone has suggestions, open an issue or PR!
+
 ## Requirements
 
 - Python 3.8+
