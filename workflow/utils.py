@@ -8,12 +8,19 @@ from ui.utils import make_key
 
 def make_output_text(ctx: WorkflowContext):
     text = """Base Seed: {bseed}
+
 Perturb Seed: {pseed}
+
 Positive Prompt: {pprompt}
+
 Negative Prompt: {nprompt}
+
 Face Prompt: {fprompt}
+
 Skin Prompt: {sprompt}
+
 Hair Prompt: {hprompt}
+
 Eyes Prompt: {eprompt}""".format(
         bseed=ctx.base_seed,
         pseed=ctx.perturb_seed,
