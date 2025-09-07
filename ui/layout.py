@@ -185,7 +185,9 @@ class MainLayout:
                                 scale=8,
                             )
 
-                            reset_gallery_btn = gr.Button("Reset Gallery", scale=1)
+                            with gr.Column(scale=1):
+                                save_btn = gr.Button("Save Image")
+                                reset_gallery_btn = gr.Button("Reset Gallery")
 
                     preview = gr.Image(
                         label="Preview",
@@ -198,6 +200,7 @@ class MainLayout:
             "gallery_index": gallery_index,
             "gallery_state": gallery_state,
             "reset_gallery_btn": reset_gallery_btn,
+            "save_image_btn": save_btn,
             "output": output_gallery,
             "output_text": output_text,
             "preview": preview,

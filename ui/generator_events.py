@@ -1,4 +1,6 @@
 from typing import Dict
+from datetime import datetime
+import json
 import gradio as gr
 from datetime import datetime
 import json
@@ -420,4 +422,8 @@ def _bind_output_gallery(components: Dict[str, gr.Component], runner: WorkflowRu
     components["reset_gallery_btn"].click(
         reset_gallery,
         outputs=[components["gallery_state"]],
+    )
+
+    components["save_image_btn"].click(
+        on_image_save, inputs=[components["gallery_state"], components["gallery_index"]]
     )

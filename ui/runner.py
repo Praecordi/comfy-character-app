@@ -1,4 +1,6 @@
 import random
+import json
+from datetime import datetime
 from threading import Event, Lock
 from queue import Queue, Empty
 
@@ -91,10 +93,22 @@ class WorkflowRunner:
 
             image_size = image[0].size
 
+            prompt = json.loads(image[0].info["prompt"])
+
+            meta = {
+                "prompt": prompt,
+                "step": label,
+                "id": id,
+                "char": char,
+                "size": image_size,
+                "timestamp": datetime.now().isoformat(),
+            }
+
             return (
                 image[0],
                 f"Generation {id} - {char}: {label} ({image_size[0]} x {image_size[1]})",
                 out_text,
+                meta,
             )
         except Empty:
             self._stop_event.set()
