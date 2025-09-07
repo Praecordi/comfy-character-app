@@ -18,9 +18,11 @@ class WorkflowState:
 
 @dataclass
 class WorkflowContext:
-    model: csn.Checkpoints = field(default=None)
+    model: csn.Model = field(default=None)
     clip: csn.Clip = field(default=None)
     vae: csn.Vae = field(default=None)
+    lora_model: csn.Model = field(default=None)
+    lora_clip: csn.Model = field(default=None)
     sampler_name: csn.Samplers = field(default=None)
     scheduler_name: csn.Schedulers = field(default=None)
     sampler: csn.Sampler = field(default=None)

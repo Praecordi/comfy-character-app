@@ -23,7 +23,7 @@ class ImageUpscaleStep(WorkflowStep):
                 insightface=ctx.faceanalysis,
                 control_net=ctx.instantid_cn,
                 image=ctx.face_image,
-                model=ctx.model,
+                model=ctx.lora_model,
                 positive=positive,
                 negative=ctx.negative_conditioning,
                 ip_weight=0.9,
@@ -35,7 +35,7 @@ class ImageUpscaleStep(WorkflowStep):
                 image_kps=image,
             )
         else:
-            model, positive, negative = ctx.model, positive, ctx.negative_conditioning
+            model, positive, negative = ctx.lora_model, positive, ctx.negative_conditioning
 
         positive, negative = ControlNetApplyAdvanced(
             positive=positive,

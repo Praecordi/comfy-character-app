@@ -39,7 +39,7 @@ class LatentUpscaleStep(WorkflowStep):
         latent = self._iterative_latent_upscale(
             latent=latent,
             scale=ctx.latent_scale,
-            model=ctx.model,
+            model=ctx.lora_model,
             positive=cn_positive,
             negative=cn_negative,
             steps=ctx.steps["latent_upscale"],

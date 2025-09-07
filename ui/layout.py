@@ -257,7 +257,7 @@ class MainLayout:
         }
 
     @staticmethod
-    def create_settings(checkpoints, resolutions, upscalers):
+    def create_settings(checkpoints, loras, resolutions, upscalers):
         with gr.Accordion(
             label="Optional Input Image (Alt-I)", open=False, elem_id="input-acrdn"
         ):
@@ -271,23 +271,75 @@ class MainLayout:
                 height=512,
             )
 
-        checkpoint = gr.Dropdown(
-            label="Checkpoint",
-            choices=checkpoints,
-        )
+        with gr.Group():
+            checkpoint = gr.Dropdown(
+                label="Checkpoint",
+                choices=checkpoints,
+            )
 
-        fewsteplora = gr.Radio(
-            label="Few Step LoRA", choices=["none", "lcm", "turbo", "dpo_turbo"]
-        )
+            lora_options = gr.Dropdown(
+                choices=loras,
+                label="LoRAs",
+                multiselect=True,
+            )
 
-        resolution = gr.Dropdown(
-            label="Resolution",
-            choices=resolutions,
-        )
+            lora_state = gr.State({})
 
-        upscaler = gr.Dropdown(label="Upscaler", choices=["None"] + upscalers)
+            with gr.Accordion(
+                "LoRA Settings (Alt-L)", open=False, elem_id="lora-acrdn"
+            ):
 
-        use_detail_daemon = gr.Checkbox(label="Use Detail Daemon")
+                @gr.render(
+                    inputs=[lora_options, lora_state], triggers=[lora_options.change]
+                )
+                def render_lora_sliders(selected, state):
+                    sliders = {}
+                    with gr.Column():
+                        for i, lkey in enumerate(selected):
+                            sliders[lkey] = gr.Slider(
+                                minimum=0.0,
+                                maximum=1.0,
+                                step=0.05,
+                                value=state.get(lkey, 0.8),
+                                label=f"{lkey}",
+                                interactive=True,
+                                key=i,
+                            )
+
+                            def create_change_handler(lora_name):
+
+                                def update_slider(slider, state):
+                                    state[lora_name] = slider
+                                    return state
+
+                                return update_slider
+
+                            sliders[lkey].change(
+                                create_change_handler(lkey),
+                                inputs=[sliders[lkey], lora_state],
+                                outputs=[lora_state],
+                            )
+
+            lora_options.change(
+                lambda selected, current_state: {
+                    lora: current_state.get(lora, 0.8) for lora in selected
+                },
+                inputs=[lora_options, lora_state],
+                outputs=[lora_state],
+            )
+
+            fewsteplora = gr.Radio(
+                label="Few Step LoRA", choices=["none", "lcm", "turbo", "dpo_turbo"]
+            )
+
+            resolution = gr.Dropdown(
+                label="Resolution",
+                choices=resolutions,
+            )
+
+            upscaler = gr.Dropdown(label="Upscaler", choices=["None"] + upscalers)
+
+            use_detail_daemon = gr.Checkbox(label="Use Detail Daemon")
 
         with gr.Group():
             gr.Markdown("Control Net and Style Settings", container=True)
@@ -330,6 +382,8 @@ class MainLayout:
         return {
             "input_image": input_image,
             "checkpoint": checkpoint,
+            "lora_options": lora_options,
+            "loras": lora_state,
             "fewsteplora": fewsteplora,
             "resolution": resolution,
             "upscaler": upscaler,
@@ -341,7 +395,7 @@ class MainLayout:
         }
 
     @staticmethod
-    def create(checkpoints, resolutions, upscalers):
+    def create(checkpoints, loras, resolutions, upscalers):
         components = {}
 
         gr.Markdown("## Generator")
@@ -351,7 +405,7 @@ class MainLayout:
         with gr.Row():
             with gr.Column(scale=2):
                 settings_comps = MainLayout.create_settings(
-                    checkpoints, resolutions, upscalers
+                    checkpoints, loras, resolutions, upscalers
                 )
 
             with gr.Column(scale=3):

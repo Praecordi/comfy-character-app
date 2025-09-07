@@ -40,7 +40,7 @@ class BaseGenStep(WorkflowStep):
             perturb_noise = RandomNoise(ctx.perturb_seed)
 
             sigmas = BasicScheduler(
-                model=ctx.model,
+                model=ctx.lora_model,
                 scheduler=ctx.scheduler_name,
                 steps=ctx.steps["base_gen"],
                 denoise=1,
@@ -50,13 +50,13 @@ class BaseGenStep(WorkflowStep):
             sampler = KSamplerSelect(ctx.sampler_name)
 
             guider = CFGGuider(
-                model=ctx.model,
+                model=ctx.lora_model,
                 positive=positive,
                 negative=negative,
                 cfg=self._scale_cfg(ctx.cfg["base_gen"], scale_for_cn=True),
             )
 
-            latent = AddNoise(ctx.model, perturb_noise, sigmas2, latent)
+            latent = AddNoise(ctx.lora_model, perturb_noise, sigmas2, latent)
 
             latent, _ = SamplerCustomAdvanced(
                 noise=base_noise,

@@ -38,6 +38,7 @@ class CharacterWorkflow:
         self.preview_callback = ui_state["preview_callback"]
         self._init_models(
             ui_state["checkpoint"],
+            ui_state["loras"],
             ui_state["fewsteplora"],
             ui_state["resolution"],
             ui_state["use_detail_daemon"],
@@ -73,7 +74,9 @@ class CharacterWorkflow:
             image_adherence=ui_state["image_adherence"],
         )
 
-    def _init_models(self, checkpoint, fewsteplora, resolution, use_detail_daemon):
+    def _init_models(
+        self, checkpoint, loras, fewsteplora, resolution, use_detail_daemon
+    ):
         model, clip, vae = csn.CheckpointLoaderSimple(checkpoint)
         if "Lightning" in checkpoint:
             sampler_name = csn.Samplers.dpmpp_2s_ancestral
@@ -113,6 +116,13 @@ class CharacterWorkflow:
                 scheduler_name = csn.Schedulers.karras
                 steps, cfg = self._generate_scaled_config(30, 8)
 
+        lora_model, lora_clip = model, clip
+
+        for lname, lstrength in loras.items():
+            lora_model, lora_clip = csn.LoraLoader(
+                lora_model, lora_clip, lname, lstrength, lstrength
+            )
+
         sampler = csn.KSamplerSelect(sampler_name)
 
         if use_detail_daemon:
@@ -150,6 +160,8 @@ class CharacterWorkflow:
             model=model,
             clip=clip,
             vae=vae,
+            lora_model=lora_model,
+            lora_clip=lora_clip,
             sampler_name=sampler_name,
             scheduler_name=scheduler_name,
             sampler=sampler,
@@ -261,9 +273,9 @@ class CharacterWorkflow:
         prompts = [pos, neg, face, skin, hair, eyes]
         conds = []
 
-        def encode(text: str) -> csn.Conditioning:
+        def encode(text: str, clip: csn.Clip) -> csn.Conditioning:
             return csn.CLIPTextEncodeSDXL(
-                clip=self.ctx.clip,
+                clip=clip,
                 width=4096,
                 height=4096,
                 crop_w=0,
@@ -276,7 +288,10 @@ class CharacterWorkflow:
 
         for i in range(len(prompts)):
             prompts[i] = substitute_character_tokens(prompts[i], character)
-            conds.append(encode(prompts[i]))
+            if i in [0, 1]:
+                conds.append(encode(prompts[i], self.ctx.lora_clip))
+            else:
+                conds.append(encode(prompts[i], self.ctx.clip))
 
         self.ctx = self.ctx.update(
             positive_prompt=prompts[0],

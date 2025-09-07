@@ -14,10 +14,12 @@ class UI:
     def __init__(
         self,
         checkpoints: List[Tuple[str, str]],
+        loras: List[Tuple[str, str]],
         resolutions: List[Tuple[str, str]],
         upscalers: List[Tuple[str, str]],
     ):
         self.checkpoints = checkpoints
+        self.loras = loras
         self.resolutions = resolutions
         self.upscalers = upscalers
 
@@ -29,7 +31,7 @@ class UI:
 
             with gr.Tab("Generator"):
                 main_components = MainLayout.create(
-                    self.checkpoints, self.resolutions, self.upscalers
+                    self.checkpoints, self.loras, self.resolutions, self.upscalers
                 )
             with gr.Tab("Character Manager"):
                 cm_components = CharacterManagerLayout.create()

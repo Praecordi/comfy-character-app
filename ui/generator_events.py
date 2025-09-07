@@ -181,6 +181,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     generate_inputs = [
         "input_image",
         "checkpoint",
+        "loras",
         "fewsteplora",
         "resolution",
         "upscaler",
@@ -243,6 +244,8 @@ def _bind_local_storage(
 ):
     persist_components = [
         "checkpoint",
+        "lora_options",
+        "loras",
         "fewsteplora",
         "resolution",
         "upscaler",
@@ -264,6 +267,8 @@ def _bind_local_storage(
     output_components = [
         "input_image",
         "checkpoint",
+        "lora_options",
+        "loras",
         "fewsteplora",
         "resolution",
         "upscaler",
@@ -313,6 +318,8 @@ def _bind_local_storage(
         return [
             None,
             checkpoint,
+            state.get("lora_options", []),
+            state.get("loras", {}),
             fewsteplora,
             state.get("resolution", resolutions[0][1]),
             state.get("upscaler", "None"),
