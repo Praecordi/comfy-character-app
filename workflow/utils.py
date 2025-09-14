@@ -58,7 +58,10 @@ def build_conditioning_prompt(
 
 
 def substitute_character_tokens(prompt: str, character: str) -> str:
-    char_data = constants.characters[make_key(character)]
+    if make_key(character) == "custom":
+        char_data = {}
+    else:
+        char_data = constants.characters[make_key(character)]
     for token, val in char_data.items():
         if isinstance(val, list):
             val = ", ".join(val)

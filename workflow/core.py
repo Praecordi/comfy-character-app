@@ -57,6 +57,12 @@ class CharacterWorkflow:
             apply_scores=ui_state["checkpoint"].startswith("pony"),
             apply_style=ui_state["enable_style"],
         )
+        self._set_hooks(
+            ui_state["hook_checkpoint"],
+            ui_state["checkpoint"],
+            ui_state["hook_start"],
+            ui_state["hook_end"],
+        )
         self._init_input_images(
             ui_state["input_image"],
             ui_state["controlnet_image"],
@@ -336,6 +342,41 @@ class CharacterWorkflow:
             cn_strength=cn_st,
             face_image=face_img,
         )
+
+    def _set_hooks(self, hook_checkpoint, checkpoint, hook_start, hook_end):
+        if hook_checkpoint != "None" and hook_checkpoint != checkpoint:
+            hook = csn.CreateHookModelAsLora(hook_checkpoint, 1.0, 1.0)
+            hook_kf = csn.CreateHookKeyframesInterpolated(
+                hook_start, hook_end, "linear", 0.0, 1.0, keyframes_count=5
+            )
+            hook = csn.SetHookKeyframes(hook, hook_kf)
+
+            new_positive_cond, new_negative_cond = csn.PairConditioningSetProperties(
+                self.ctx.positive_conditioning,
+                self.ctx.negative_conditioning,
+                hooks=hook,
+            )
+            new_skin_cond = csn.ConditioningSetProperties(
+                self.ctx.skin_conditioning, hooks=hook
+            )
+            new_face_cond = csn.ConditioningSetProperties(
+                self.ctx.face_conditioning, hooks=hook
+            )
+            new_hair_cond = csn.ConditioningSetProperties(
+                self.ctx.hair_conditioning, hooks=hook
+            )
+            new_eyes_cond = csn.ConditioningSetProperties(
+                self.ctx.eyes_conditioning, hooks=hook
+            )
+
+            self.ctx.update(
+                positive_conditioning=new_positive_cond,
+                negative_conditioning=new_negative_cond,
+                skin_conditioning=new_skin_cond,
+                face_conditioning=new_face_cond,
+                hair_conditioning=new_hair_cond,
+                eyes_conditioning=new_eyes_cond,
+            )
 
     def _generate_scaled_config(self, n, k):
         new_steps = {}

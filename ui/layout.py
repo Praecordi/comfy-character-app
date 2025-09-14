@@ -277,6 +277,15 @@ class MainLayout:
                 choices=checkpoints,
             )
 
+            hook_checkpoint = gr.Dropdown(
+                label="Hook Checkpoint",
+                choices=["None"] + checkpoints,
+            )
+
+            with gr.Row():
+                hook_start = gr.Slider(0, 1.0, 0, step=0.1, label="Hook Start Strength")
+                hook_end = gr.Slider(0, 1.0, 1.0, step=0.1, label="Hook End Strength")
+
             lora_options = gr.Dropdown(
                 choices=loras,
                 label="LoRAs",
@@ -382,6 +391,9 @@ class MainLayout:
         return {
             "input_image": input_image,
             "checkpoint": checkpoint,
+            "hook_checkpoint": hook_checkpoint,
+            "hook_start": hook_start,
+            "hook_end": hook_end,
             "lora_options": lora_options,
             "loras": lora_state,
             "fewsteplora": fewsteplora,

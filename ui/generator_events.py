@@ -76,6 +76,13 @@ def on_checkpoint_change(checkpoint):
         return gr.update(interactive=True)
 
 
+def on_hook_checkpoint_change(hook_checkpoint, checkpoint):
+    if hook_checkpoint == "None" or hook_checkpoint == checkpoint:
+        return gr.update(interactive=False), gr.update(interactive=False)
+    else:
+        return gr.update(interactive=True), gr.update(interactive=True)
+
+
 def on_image_change(image):
     if image is None:
         return gr.update(value=70, interactive=False)
@@ -135,13 +142,16 @@ def _bind_character_change(components: Dict[str, gr.Component]):
 
 
 def _bind_checkpoint_change(components: Dict[str, gr.Component]):
-    input_keys = ["checkpoint"]
-    output_keys = ["fewsteplora"]
-
     components["checkpoint"].change(
         on_checkpoint_change,
-        inputs=[components[x] for x in input_keys],
-        outputs=[components[x] for x in output_keys],
+        inputs=[components["checkpoint"]],
+        outputs=[components["fewsteplora"]],
+    )
+
+    components["hook_checkpoint"].change(
+        on_hook_checkpoint_change,
+        inputs=[components["hook_checkpoint"], components["checkpoint"]],
+        outputs=[components["hook_start"], components["hook_end"]],
     )
 
 
@@ -181,6 +191,9 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     generate_inputs = [
         "input_image",
         "checkpoint",
+        "hook_checkpoint",
+        "hook_start",
+        "hook_end",
         "loras",
         "fewsteplora",
         "resolution",
@@ -244,6 +257,9 @@ def _bind_local_storage(
 ):
     persist_components = [
         "checkpoint",
+        "hook_checkpoint",
+        "hook_start",
+        "hook_end",
         "lora_options",
         "loras",
         "fewsteplora",
@@ -267,6 +283,9 @@ def _bind_local_storage(
     output_components = [
         "input_image",
         "checkpoint",
+        "hook_checkpoint",
+        "hook_start",
+        "hook_end",
         "lora_options",
         "loras",
         "fewsteplora",
@@ -306,6 +325,9 @@ def _bind_local_storage(
         checkpoint = state.get("checkpoint", checkpoints[0][1])
         character = state.get("character", list(characters.keys())[0].capitalize())
 
+        hook_checkpoint = state.get("hook_checkpoint", "None")
+        hook_start, hook_end = on_hook_checkpoint_change(hook_checkpoint, checkpoint)
+
         char_tuple = on_character_change(character, characters)
         disable = any(
             x in checkpoint for x in ["Lightning", "Hyper4S", "Hyper8S", "Turbo"]
@@ -318,6 +340,9 @@ def _bind_local_storage(
         return [
             None,
             checkpoint,
+            hook_checkpoint,
+            hook_start,
+            hook_end,
             state.get("lora_options", []),
             state.get("loras", {}),
             fewsteplora,
