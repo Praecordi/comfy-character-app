@@ -11,28 +11,44 @@ class DetailSkinStep(WorkflowStep):
     applymask = True
 
     def _skin_segment(self, image):
-        ctx = self.ctx
-        gd_sam = GroundingDinoSAMSegmentSegmentAnything
+        sam = LayerMaskSegmentAnythingUltraV2
 
-        _, person_mask = gd_sam(
-            ctx.sam_model, ctx.gd_model, image, prompt="person", threshold=0.5
+        _, person_mask = sam(
+            image,
+            sam.sam_model.sam_vit_h_2_56GB,
+            sam.grounding_dino_model.GroundingDINO_SwinB_938MB,
+            detail_method=sam.detail_method.VITMatte,
+            detail_erode=36,
+            detail_dilate=6,
+            prompt="person",
+            threshold=0.5,
+            cache_model=False,
         )
-        _, clothes_mask = gd_sam(
-            ctx.sam_model, ctx.gd_model, image, prompt="clothes", threshold=0.5
+        _, clothes_mask = sam(
+            image,
+            sam.sam_model.sam_vit_h_2_56GB,
+            sam.grounding_dino_model.GroundingDINO_SwinB_938MB,
+            detail_method=sam.detail_method.VITMatte,
+            detail_erode=6,
+            detail_dilate=36,
+            prompt="clothes",
+            threshold=0.5,
+            cache_model=False,
         )
-        _, hair_mask = gd_sam(
-            ctx.sam_model, ctx.gd_model, image, prompt="hair", threshold=0.5
+        _, hair_mask = sam(
+            image,
+            sam.sam_model.sam_vit_h_2_56GB,
+            sam.grounding_dino_model.GroundingDINO_SwinB_938MB,
+            detail_method=sam.detail_method.VITMatte,
+            detail_erode=6,
+            detail_dilate=36,
+            prompt="hair",
+            threshold=0.5,
+            cache_model=False,
         )
 
-        person_mask = MaskErodeRegion(person_mask, 10)
-        clothes_mask = MaskDilateRegion(clothes_mask, 10)
-        hair_mask = MaskDilateRegion(hair_mask, 10)
-
-        mask = SubtractMask(person_mask, clothes_mask)
-        mask = SubtractMask(mask, hair_mask)
-
-        mask = MaskDilateRegion(mask, 10)
-        mask = MaskFillHoles(mask)
+        mask = MasksSubtract(person_mask, clothes_mask)
+        mask = MasksSubtract(mask, hair_mask)
 
         return mask
 
@@ -43,22 +59,15 @@ class DetailSkinStep(WorkflowStep):
 
         mask = self._skin_segment(image)
 
-        if self.usebbox:
-            image_width, image_height, _ = GetImageSize(image)
-            _, _, x, y, width, height = MaskBoundingBox(mask)
-            mask = MaskRectAreaAdvanced(x, y, width, height, image_width, image_height)
-
-        segs = MaskToSEGS(
-            mask=mask,
-            combined=True,
-            crop_factor=2,
-            bbox_fill=False,
-            drop_size=10,
-            contour_fill=True,
+        cropped_image, cropped_mask, crop_box, _ = LayerUtilityCropByMaskV2(
+            image,
+            mask,
+            detect="mask_area",
+            top_reserve=100,
+            bottom_reserve=100,
+            left_reserve=100,
+            right_reserve=100,
         )
-        segs = SetDefaultImageForSEGS(segs=segs, image=image, override=True)
-        segs_header, seg_elt = ImpactDecomposeSEGS(segs)
-        seg_elt, cropped_image, cropped_mask, _, _, _, _, _ = ImpactFromSEGELT(seg_elt)
         width, height, _ = GetImageSize(cropped_image)
 
         if ctx.upscale_model:
@@ -108,12 +117,12 @@ class DetailSkinStep(WorkflowStep):
             width=width,
             height=height,
             interpolation=ImageResize_.interpolation.lanczos,
-            method=ImageResize_.method.keep_proportion,
+            method=ImageResize_.method.stretch,
         )
 
-        seg_elt = ImpactEditSEGELT(seg_elt, cropped_image)
-        segs = ImpactAssembleSEGS(segs_header, seg_elt)
-        image = SEGSPaste(image, segs, 20, 255)
+        image, _ = LayerUtilityRestoreCropBox(
+            image, cropped_image, False, crop_box, cropped_mask
+        )
 
         latent = VAEEncode(image, ctx.vae)
 

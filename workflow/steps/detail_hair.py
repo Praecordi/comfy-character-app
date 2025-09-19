@@ -7,7 +7,6 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 @register_step
 class DetailHairStep(WorkflowStep):
     metadata = WorkflowMetadata(label="Hair Detail", order=4)
-    usebbox = False
     applymask = True
 
     def run(self, state: WorkflowState) -> WorkflowState:
@@ -15,26 +14,29 @@ class DetailHairStep(WorkflowStep):
 
         image = state.image
 
-        _, mask = GroundingDinoSAMSegmentSegmentAnything(
-            ctx.sam_model, ctx.gd_model, image, prompt="hair", threshold=0.5
+        sam = LayerMaskSegmentAnythingUltraV2
+
+        _, mask = sam(
+            image,
+            sam.sam_model.sam_vit_h_2_56GB,
+            sam.grounding_dino_model.GroundingDINO_SwinB_938MB,
+            detail_method=sam.detail_method.VITMatte,
+            detail_erode=18,
+            detail_dilate=18,
+            prompt="hair",
+            threshold=0.5,
+            cache_model=False,
         )
 
-        if self.usebbox:
-            image_width, image_height, _ = GetImageSize(image)
-            _, _, x, y, width, height = MaskBoundingBox(mask)
-            mask = MaskRectAreaAdvanced(x, y, width, height, image_width, image_height)
-
-        segs = MaskToSEGS(
-            mask=mask,
-            combined=True,
-            crop_factor=2,
-            bbox_fill=False,
-            drop_size=10,
-            contour_fill=True,
+        cropped_image, cropped_mask, crop_box, _ = LayerUtilityCropByMaskV2(
+            image,
+            mask,
+            detect="mask_area",
+            top_reserve=100,
+            bottom_reserve=100,
+            left_reserve=100,
+            right_reserve=100,
         )
-        segs = SetDefaultImageForSEGS(segs=segs, image=image, override=True)
-        segs_header, seg_elt = ImpactDecomposeSEGS(segs)
-        seg_elt, cropped_image, cropped_mask, _, _, _, _, _ = ImpactFromSEGELT(seg_elt)
         width, height, _ = GetImageSize(cropped_image)
 
         if ctx.upscale_model:
@@ -84,12 +86,12 @@ class DetailHairStep(WorkflowStep):
             width=width,
             height=height,
             interpolation=ImageResize_.interpolation.lanczos,
-            method=ImageResize_.method.keep_proportion,
+            method=ImageResize_.method.stretch,
         )
 
-        seg_elt = ImpactEditSEGELT(seg_elt, cropped_image)
-        segs = ImpactAssembleSEGS(segs_header, seg_elt)
-        image = SEGSPaste(image, segs, 20, 255)
+        image, _ = LayerUtilityRestoreCropBox(
+            image, cropped_image, False, crop_box, cropped_mask
+        )
 
         latent = VAEEncode(image, ctx.vae)
 
