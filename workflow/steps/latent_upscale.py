@@ -55,8 +55,8 @@ class LatentUpscaleStep(WorkflowStep):
         image = ImageColorMatch(
             image=upscaled,
             reference=image,
-            color_space=ImageColorMatch.color_space.RGB,
-            factor=0.75,
+            color_space=ImageColorMatch.color_space.LAB,
+            factor=1,
         )
 
         latent = VAEEncode(image, ctx.vae)

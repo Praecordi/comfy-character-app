@@ -119,7 +119,7 @@ class WorkflowStep(ABC):
                 model=model, positive=cn_positive, negative=cn_negative, cfg=cfg[i]
             )
 
-            latent, _ = csn.SamplerCustomAdvanced(
+            _, latent = csn.SamplerCustomAdvanced(
                 noise=base_noise,
                 guider=guider,
                 sampler=ctx.sampler,
@@ -143,6 +143,7 @@ class WorkflowStep(ABC):
         seed_offset=0,
         optional_mask=None,
         sharpen=0.8,
+        apply_color_match=False,
         apply_cn=True,
         cn_strength=0.5,
         cn_limits=(0, 1),
@@ -191,6 +192,7 @@ class WorkflowStep(ABC):
 
             if sharpen > 0:
                 image = csn.ImageCASharpening(image, sharpen)
+                prev_image = image
 
             latent = csn.VAEEncode(image, ctx.vae)
             if optional_mask is not None:
@@ -209,7 +211,7 @@ class WorkflowStep(ABC):
                 model=model, positive=cn_positive, negative=cn_negative, cfg=cfg[i]
             )
 
-            latent, _ = csn.SamplerCustomAdvanced(
+            _, latent = csn.SamplerCustomAdvanced(
                 noise=base_noise,
                 guider=guider,
                 sampler=ctx.sampler,
@@ -218,6 +220,14 @@ class WorkflowStep(ABC):
             )
 
             image = csn.VAEDecode(latent, ctx.vae)
+
+            if apply_color_match:
+                image = csn.ImageColorMatch(
+                    image=image,
+                    reference=prev_image,
+                    color_space=csn.ImageColorMatch.color_space.LAB,
+                    factor=0.5,
+                )
 
         return image
 

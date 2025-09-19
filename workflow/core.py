@@ -27,12 +27,12 @@ class CharacterWorkflow:
         }
         self.base_cfg = {
             "base_gen": 8,
-            "latent_upscale": (10, 4),
-            "detail_skin": (6, 4),
+            "latent_upscale": (8, 4),
+            "detail_skin": (5, 3),
             "detail_face": 4,
             "detail_hair": (7, 5),
             "detail_eyes": (6, 4),
-            "image_upscale": (6, 4),
+            "image_upscale": (4, 2),
         }
 
         self.preview_callback = ui_state["preview_callback"]

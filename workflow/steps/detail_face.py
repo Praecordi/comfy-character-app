@@ -7,7 +7,6 @@ from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 @register_step
 class DetailFaceStep(WorkflowStep):
     metadata = WorkflowMetadata(label="Face Detail", order=3)
-    usebbox = False
     applymask = True
 
     def apply_face_sampling(self, state):
@@ -68,11 +67,11 @@ class DetailFaceStep(WorkflowStep):
                 model=ctx.model,
                 positive=positive,
                 negative=ctx.negative_conditioning,
-                ip_weight=0.9,
-                cn_strength=0.3,
-                start_at=0,
-                end_at=1,
-                noise=0,
+                ip_weight=0.8,
+                cn_strength=0.5,
+                start_at=0.8,
+                end_at=1.0,
+                noise=0.1,
                 combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
                 image_kps=cropped_image,
             )
@@ -84,26 +83,23 @@ class DetailFaceStep(WorkflowStep):
         cropped_mask = GrowMask(cropped_mask, expand=50)
         cropped_mask = MaskBlur(cropped_mask, amount=70)
 
-        cropped_latent = VAEEncode(cropped_image, ctx.vae)
-
-        cropped_latent = self._iterative_latent_upscale(
-            latent=cropped_latent,
+        cropped_image = self._iterative_image_upscale(
+            image=cropped_image,
             scale=1.6,
             model=model,
             positive=positive,
             negative=negative,
             steps=ctx.steps["detail_face"],
             cfg=self._scale_cfg(ctx.cfg["detail_face"]),
-            denoise=(0.7, 0.6),
+            denoise=(0.8, 0.6),
             num_iterations=3,
             seed_offset=self.metadata.order,
             optional_mask=cropped_mask if self.applymask else None,
+            apply_color_match=True,
             apply_cn=True,
-            cn_strength=0.5,
-            cn_limits=(0, 0.5),
+            cn_strength=0.6,
+            cn_limits=(0, 1),
         )
-
-        cropped_image = VAEDecode(cropped_latent, ctx.vae)
 
         cropped_image, _, _ = ImageResize_(
             image=cropped_image,

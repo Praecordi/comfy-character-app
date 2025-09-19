@@ -26,11 +26,11 @@ class ImageUpscaleStep(WorkflowStep):
                 model=ctx.lora_model,
                 positive=positive,
                 negative=ctx.negative_conditioning,
-                ip_weight=0.9,
-                cn_strength=0.3,
-                start_at=0.3,
-                end_at=0.9,
-                noise=0,
+                ip_weight=0.8,
+                cn_strength=0.5,
+                start_at=0.7,
+                end_at=1.0,
+                noise=0.1,
                 combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
                 image_kps=image,
             )
@@ -77,8 +77,8 @@ class ImageUpscaleStep(WorkflowStep):
         image = ImageColorMatch(
             image=upscaled,
             reference=image,
-            color_space=ImageColorMatch.color_space.RGB,
-            factor=0.75,
+            color_space=ImageColorMatch.color_space.LAB,
+            factor=1,
         )
 
         latent = VAEEncode(image, ctx.vae)
