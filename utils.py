@@ -1,12 +1,13 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 import re
 
-import constants
-from workflow.state import WorkflowContext
-from ui.utils import make_key
+from constants import characters
+
+if TYPE_CHECKING:
+    from workflow.state import WorkflowContext
 
 
-def make_output_text(ctx: WorkflowContext):
+def make_output_text(ctx: "WorkflowContext"):
     text = """Base Seed: {bseed}
 
 Perturb Seed: {pseed}
@@ -61,7 +62,7 @@ def substitute_character_tokens(prompt: str, character: str) -> str:
     if make_key(character) == "custom":
         char_data = {}
     else:
-        char_data = constants.characters[make_key(character)]
+        char_data = characters[make_key(character)]
     for token, val in char_data.items():
         if isinstance(val, list):
             val = ", ".join(val)
@@ -98,3 +99,23 @@ def expand_iterations_geometric(value, n, callback=lambda x: x):
         return [callback(value)] * n
     else:
         raise ValueError("Provide a value of int/float or tuple of size 2 to expand")
+
+
+def make_character_description(character):
+    char_key = make_key(character)
+    if char_key == "custom" or char_key not in characters:
+        return ""
+    else:
+        char_dict = characters[char_key]
+
+        desc = "\n".join([f"- **{{{key}}}**" for key in char_dict.keys()])
+
+        return desc
+
+
+def make_key(name):
+    return name.replace(" ", "_").lower()
+
+
+def make_name(key):
+    return key.replace("_", " ").title()

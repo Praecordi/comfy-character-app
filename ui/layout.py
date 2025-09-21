@@ -1,8 +1,8 @@
 import gradio as gr
 
 from constants import characters
+from utils import make_name
 from workflow.steps import get_steps
-from ui.utils import make_name
 from ui.cm_events import delete_field, update_field
 
 

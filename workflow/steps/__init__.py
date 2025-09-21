@@ -7,8 +7,8 @@ import sys
 
 
 import comfy_nodes as csn
+from utils import expand_iterations_linear
 from workflow.state import WorkflowState, WorkflowContext
-from workflow.utils import expand_iterations_linear
 
 _STEP_REGISTRY: Dict[str, Type["WorkflowStep"]] = {}
 

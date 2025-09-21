@@ -5,7 +5,7 @@ from pathlib import Path
 import gradio as gr
 
 from constants import characters, comfyui_input, save_character
-from ui.utils import make_key, make_name
+from utils import make_key, make_name
 
 
 def _make_fields(character):

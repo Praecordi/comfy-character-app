@@ -3,9 +3,9 @@ from threading import Event, Lock
 import gradio as gr
 
 from comfy_nodes import queue
+from utils import make_output_text
 from workflow.core import CharacterWorkflow
 from workflow.caption import CaptionWorkflow
-from workflow.utils import make_output_text
 
 
 class WorkflowRunner:

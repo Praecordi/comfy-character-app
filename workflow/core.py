@@ -3,13 +3,13 @@ import traceback
 
 import comfy_nodes as csn
 from constants import app_constants
-from workflow.steps import _STEP_REGISTRY, WorkflowStep
-from workflow.state import WorkflowContext, WorkflowState
-from workflow.utils import (
+from utils import (
     clean_prompt_string,
     build_conditioning_prompt,
     substitute_character_tokens,
 )
+from workflow.steps import _STEP_REGISTRY, WorkflowStep
+from workflow.state import WorkflowContext, WorkflowState
 
 
 class CharacterWorkflow:
