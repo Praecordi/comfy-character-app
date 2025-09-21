@@ -198,56 +198,61 @@ class MainLayout:
                     )
 
             with gr.Row(equal_height=True):
-                with gr.Column(scale=1):
-                    with gr.Accordion(label="Available Keys", open=False):
-                        character_description = gr.Markdown(padding=True)
+                with gr.Column(scale=1), gr.Accordion(
+                    label="Available Keys", open=False
+                ):
+                    character_description = gr.Markdown(padding=True)
 
-                with gr.Column(scale=3):
-                    with gr.Accordion("Character Details", open=False):
-                        with gr.Row(equal_height=True):
-                            with gr.Column(scale=1):
-                                face_prompt = gr.Textbox(
-                                    label="Face Prompt",
-                                    lines=4,
-                                    placeholder="Enter face prompt here...",
-                                    interactive=True,
-                                    elem_classes=["attention-editable"],
-                                )
-                                skin_prompt = gr.Textbox(
-                                    label="Skin Prompt",
-                                    lines=4,
-                                    placeholder="Enter skin prompt here...",
-                                    interactive=True,
-                                    elem_classes=["attention-editable"],
-                                )
-                                hair_prompt = gr.Textbox(
-                                    label="Hair Prompt",
-                                    lines=4,
-                                    placeholder="Enter hair prompt here...",
-                                    interactive=True,
-                                    elem_classes=["attention-editable"],
-                                )
-                                eyes_prompt = gr.Textbox(
-                                    label="Eyes Prompt",
-                                    lines=4,
-                                    placeholder="Enter eyes prompt here",
-                                    interactive=True,
-                                    elem_classes=["attention-editable"],
-                                )
+                with gr.Column(scale=4), gr.Accordion(
+                    "Character Details", open=False
+                ), gr.Row(equal_height=True):
+                    with gr.Column(scale=1):
+                        base_prompt = gr.Textbox(
+                            label="Base Prompt",
+                            lines=2,
+                            interactive=False,
+                            elem_classes=["attention-editable"],
+                        )
+                        face_prompt = gr.Textbox(
+                            label="Face Prompt",
+                            lines=2,
+                            interactive=False,
+                            elem_classes=["attention-editable"],
+                        )
+                        skin_prompt = gr.Textbox(
+                            label="Skin Prompt",
+                            lines=2,
+                            interactive=False,
+                            elem_classes=["attention-editable"],
+                        )
+                        hair_prompt = gr.Textbox(
+                            label="Hair Prompt",
+                            lines=2,
+                            interactive=False,
+                            elem_classes=["attention-editable"],
+                        )
+                        eyes_prompt = gr.Textbox(
+                            label="Eyes Prompt",
+                            lines=2,
+                            interactive=False,
+                            elem_classes=["attention-editable"],
+                        )
 
-                            with gr.Column(scale=3):
-                                face_images = gr.Gallery(
-                                    label="Face Images",
-                                    type="filepath",
-                                    file_types=["image"],
-                                    show_download_button=False,
-                                    show_fullscreen_button=False,
-                                    show_share_button=False,
-                                )
+                    with gr.Column(scale=2):
+                        face_images = gr.Gallery(
+                            label="Face Images",
+                            type="filepath",
+                            file_types=["image"],
+                            show_download_button=False,
+                            show_fullscreen_button=False,
+                            show_share_button=False,
+                            interactive=False,
+                        )
 
         return {
             "character": character,
             "character_description": character_description,
+            "base_prompt": base_prompt,
             "face_prompt": face_prompt,
             "skin_prompt": skin_prompt,
             "hair_prompt": hair_prompt,

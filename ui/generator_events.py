@@ -28,45 +28,30 @@ def bind_events(
 
 
 def on_character_change(character, character_state):
-    if character == "Custom":
-        return (
-            gr.update(),
-            gr.update(value="", interactive=True),
-            gr.update(value="", interactive=True),
-            gr.update(value="", interactive=True),
-            gr.update(value="", interactive=True),
-            gr.update(value=None, interactive=True),
-            gr.update(value=""),
-        )
+    char_key = make_key(character)
+    if char_key not in character_state:
+        char_key = list(character_state.keys())[0]
+
+    if isinstance(character_state[char_key]["face_reference"], list):
+        reference = [
+            str(comfyui_input / ref)
+            for ref in character_state[char_key]["face_reference"]
+        ]
     else:
-        char_key = make_key(character)
-        if char_key not in character_state:
-            char_key = list(character_state.keys())[0]
+        reference = [str(comfyui_input / character_state[char_key]["face_reference"])]
 
-        if isinstance(character_state[char_key]["face_reference"], list):
-            reference = [
-                str(comfyui_input / ref)
-                for ref in character_state[char_key]["face_reference"]
-            ]
-        else:
-            reference = [
-                str(comfyui_input / character_state[char_key]["face_reference"])
-            ]
+    new_choices = [make_name(key) for key in character_state.keys()]
 
-        new_choices = [make_name(key) for key in character_state.keys()] + ["Custom"]
-
-        return (
-            gr.update(choices=new_choices),
-            gr.update(value=character_state[char_key]["face"], interactive=False),
-            gr.update(value=character_state[char_key]["skin"], interactive=False),
-            gr.update(value=character_state[char_key]["hair"], interactive=False),
-            gr.update(value=character_state[char_key]["eyes"], interactive=False),
-            gr.update(
-                value=reference,
-                interactive=False,
-            ),
-            gr.update(value=make_character_description(make_name(char_key))),
-        )
+    return (
+        gr.update(choices=new_choices),
+        gr.update(value=character_state[char_key]["base"]),
+        gr.update(value=character_state[char_key]["face"]),
+        gr.update(value=character_state[char_key]["skin"]),
+        gr.update(value=character_state[char_key]["hair"]),
+        gr.update(value=character_state[char_key]["eyes"]),
+        gr.update(value=reference),
+        gr.update(value=make_character_description(make_name(char_key))),
+    )
 
 
 def on_checkpoint_change(checkpoint):
@@ -121,6 +106,7 @@ def _bind_character_change(components: Dict[str, gr.Component]):
     input_keys = ["character", "character_state"]
     output_keys = [
         "character",
+        "base_prompt",
         "face_prompt",
         "skin_prompt",
         "hair_prompt",
@@ -213,6 +199,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "controlnet_strength",
         "style_image",
         "style_strength",
+        "base_prompt",
         "face_prompt",
         "skin_prompt",
         "hair_prompt",
@@ -306,6 +293,7 @@ def _bind_local_storage(
         "controlnet_strength",
         "style_image",
         "style_strength",
+        "base_prompt",
         "face_prompt",
         "skin_prompt",
         "hair_prompt",
@@ -368,6 +356,7 @@ def _bind_local_storage(
             char_tuple[3],
             char_tuple[4],
             char_tuple[5],
+            char_tuple[6],
             state.get("swap_method", "instantid"),
             state.get("positive_prompt", ""),
             state.get("negative_prompt", ""),

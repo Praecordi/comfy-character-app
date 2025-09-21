@@ -49,6 +49,7 @@ class CharacterWorkflow:
             pos_prompt=ui_state["positive_prompt"],
             neg_prompt=ui_state["negative_prompt"],
             style_prompt=ui_state["style_prompt"],
+            base_prompt=ui_state["base_prompt"],
             face_prompt=ui_state["face_prompt"],
             skin_prompt=ui_state["skin_prompt"],
             hair_prompt=ui_state["hair_prompt"],
@@ -238,6 +239,7 @@ class CharacterWorkflow:
         pos_prompt,
         neg_prompt,
         style_prompt,
+        base_prompt,
         face_prompt,
         skin_prompt,
         hair_prompt,
@@ -260,12 +262,12 @@ class CharacterWorkflow:
         neg = ", ".join(neg)
 
         face = build_conditioning_prompt(
-            f"{{base}}, {face_prompt}" or "",
+            f"{base_prompt}, {face_prompt}" or "",
             style_prompt if apply_style else None,
             apply_scores,
         )
         skin = build_conditioning_prompt(
-            f"{{base}}, {skin_prompt}" or "",
+            f"{base_prompt}, {skin_prompt}" or "",
             style_prompt if apply_style else None,
             apply_scores,
         )
