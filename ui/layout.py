@@ -91,52 +91,98 @@ class MainLayout:
 
     @staticmethod
     def create_controllers():
-        with gr.Accordion("Process Controller", open=True, elem_id="proc-acrdn"):
-            process_controller = gr.CheckboxGroup(
-                label="Process Controllers",
-                choices=get_steps(),
+        internal_steps = gr.State(value=[])
+        process_controller = gr.State(value=[])
+
+        internal_steps.attach_load_event(
+            lambda x: [k["step"] for k in x], every=None, inputs=[process_controller]
+        )
+
+        def add_step(selected, controller, steps):
+            if not selected:
+                return gr.update(value=None), controller, steps
+
+            new_controller = controller + [{"step": selected, "settings": {}}]
+            new_steps = steps + [selected]
+            return (gr.update(value=None), new_controller, new_steps)
+
+        def remove_step_at(idx):
+            def _remove(controller, steps):
+                return (
+                    controller[:idx] + controller[idx + 1 :],
+                    steps[:idx] + steps[idx + 1 :],
+                )
+
+            return _remove
+
+        def update_setting_at(idx, label):
+
+            def _update(controller, value):
+                controller[idx]["settings"][label] = value
+
+                return controller
+
+            return _update
+
+        def render_step_at(idx, step_name, step_options):
+            with gr.Row():
+                with gr.Column(scale=4), gr.Accordion(step_name, open=False):
+                    gr.Markdown(
+                        f"{idx+1}. Settings for **{step_name}**", key=f"md{idx}"
+                    )
+
+                    for label, params in step_options[step_name].items():
+                        if params["type"] == "slider":
+                            el_params = {
+                                k: v for k, v in params.items() if not k == "type"
+                            }
+                            param_element = gr.Slider(
+                                **el_params,
+                                key=f"{label}{idx}_slider",
+                            )
+                        else:
+                            continue
+
+                        param_element.change(
+                            update_setting_at(idx, label),
+                            inputs=[
+                                process_controller,
+                                param_element,
+                            ],
+                            outputs=[process_controller],
+                        )
+
+                remove_btn = gr.Button(
+                    "Remove Step", variant="stop", scale=1, key=f"btn{idx}"
+                )
+                remove_btn.click(
+                    remove_step_at(idx),
+                    inputs=[process_controller, internal_steps],
+                    outputs=[process_controller, internal_steps],
+                )
+
+        with gr.Group():
+            gr.Markdown("Process Controller", container=True)
+
+            step_options = get_steps()
+
+            step_dropdown = gr.Dropdown(
+                label="Steps", value=None, choices=step_options.keys()
             )
 
-            with gr.Row():
-                with gr.Column():
-                    latent_upscale_scale = gr.Slider(
-                        minimum=1,
-                        maximum=2,
-                        step=0.05,
-                        label="Latent Upscale Scale",
-                        show_reset_button=False,
-                    )
-                    latent_upscale_adherence = gr.Slider(
-                        minimum=0,
-                        maximum=1,
-                        step=0.05,
-                        label="Latent Upscale Adherence",
-                        show_reset_button=False,
-                    )
+            step_dropdown.change(
+                add_step,
+                inputs=[step_dropdown, process_controller, internal_steps],
+                outputs=[step_dropdown, process_controller, internal_steps],
+            )
 
+            @gr.render(inputs=process_controller, triggers=[internal_steps.change])
+            def render_step_settings(controller):
                 with gr.Column():
-                    image_upscale_scale = gr.Slider(
-                        minimum=1,
-                        maximum=2,
-                        step=0.05,
-                        label="Image Upscale Scale",
-                        show_reset_button=False,
-                    )
-                    image_upscale_adherence = gr.Slider(
-                        minimum=0,
-                        maximum=1,
-                        step=0.05,
-                        label="Image Upscale Adherence",
-                        show_reset_button=False,
-                    )
+                    for i, step in enumerate(controller):
+                        render_step_at(i, step["step"], step_options)
 
-        return {
-            "process_controller": process_controller,
-            "latent_scale": latent_upscale_scale,
-            "latent_adherence": latent_upscale_adherence,
-            "image_scale": image_upscale_scale,
-            "image_adherence": image_upscale_adherence,
-        }
+        return {"process_controller": process_controller}
 
     @staticmethod
     def create_output_panel():

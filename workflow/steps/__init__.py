@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Type, Dict
+from dataclasses import dataclass, field
+from typing import Type, Dict, Any
 import importlib
 import pkgutil
 import sys
@@ -22,9 +22,11 @@ def get_steps():
     steps = []
     for label, cls in _STEP_REGISTRY.items():
         if not cls.metadata.default_enabled:
-            steps.append((cls.metadata.order, cls.metadata.label))
+            steps.append(
+                (cls.metadata.order, cls.metadata.label, cls.metadata.parameters)
+            )
 
-    return [x[1] for x in sorted(steps, key=lambda x: x[0])]
+    return {x[1]: x[2] for x in sorted(steps, key=lambda x: x[0])}
 
 
 @dataclass
@@ -32,17 +34,22 @@ class WorkflowMetadata:
     label: str
     order: int
     default_enabled: bool = False
+    parameters: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
 class WorkflowStep(ABC):
     metadata: WorkflowMetadata
 
-    def __init__(self, context: WorkflowContext):
+    def __init__(self, context: WorkflowContext, settings: Dict[str, Any] = {}):
         """
         context: The WorkflowContext instance
         This allows access to models, configs, VAE, etc.
         """
         self.ctx = context
+        self._init(**settings)
+
+    def _init(self, **settings):
+        pass
 
     @abstractmethod
     def run(self, state: WorkflowState) -> WorkflowState:

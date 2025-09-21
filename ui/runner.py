@@ -19,7 +19,7 @@ class WorkflowRunner:
 
         self._task_queue = Queue()
         self._task_lock = Lock()
-        self._current_id = 0
+        self._current_id = 1
 
     def _push_preview(self, task, node_id, image):
         with self._preview_lock:
@@ -48,10 +48,10 @@ class WorkflowRunner:
 
         result_list = await wf.queue(in_state["process_controller"])
 
-        for result, label in result_list:
+        for result, step_num, label in result_list:
             with self._task_lock:
                 self._task_queue.put_nowait(
-                    (result, char, label, self._current_id, out_text)
+                    (result, char, step_num, label, self._current_id, out_text)
                 )
 
         self._current_id += 1
@@ -82,7 +82,9 @@ class WorkflowRunner:
     async def get_task(self):
         try:
             with self._task_lock:
-                _result, char, label, id, out_text = self._task_queue.get_nowait()
+                _result, char, step_num, label, id, out_text = (
+                    self._task_queue.get_nowait()
+                )
 
             self._reset_preview()
             self._stop_event.clear()
@@ -97,6 +99,7 @@ class WorkflowRunner:
 
             meta = {
                 "prompt": prompt,
+                "step_num": step_num,
                 "step": label,
                 "id": id,
                 "char": char,
@@ -106,7 +109,7 @@ class WorkflowRunner:
 
             return (
                 image[0],
-                f"Generation {id} - {char}: {label} ({image_size[0]} x {image_size[1]})",
+                f"Generation {id}.{step_num} - {char}: {label} ({image_size[0]} x {image_size[1]})",
                 out_text,
                 meta,
             )

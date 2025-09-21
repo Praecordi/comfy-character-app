@@ -1,4 +1,4 @@
-from typing import List, Tuple, Iterator
+from typing import List, Tuple, Iterator, Dict, Any
 
 import comfy_nodes as csn
 from constants import app_constants
@@ -73,10 +73,6 @@ class CharacterWorkflow:
             base_seed=ui_state["base_seed"],
             perturb_seed=ui_state["perturb_seed"],
             swap_method=ui_state["swap_method"],
-            latent_scale=ui_state["latent_scale"],
-            latent_adherence=ui_state["latent_adherence"],
-            image_scale=ui_state["image_scale"],
-            image_adherence=ui_state["image_adherence"],
         )
 
     def _init_models(
@@ -399,17 +395,24 @@ class CharacterWorkflow:
 
         return new_steps, new_cfg
 
-    def iter_wf(self, controller: List[str]) -> Iterator[WorkflowStep]:
+    def iter_wf(self, controller: List[Dict[str, Any]]) -> Iterator[WorkflowStep]:
         steps: List[Tuple[int, WorkflowStep]] = []
+
+        idx = 0
         for cls in _STEP_REGISTRY.values():
-            if cls.metadata.default_enabled or cls.metadata.label in controller:
+            if cls.metadata.default_enabled:
                 step_instance = cls(self.ctx)
-                steps.append((cls.metadata.order, step_instance))
+                steps.append((idx, step_instance))
+                idx += 1
+
+        for i, step in enumerate(controller):
+            step_instance = _STEP_REGISTRY[step["step"]](self.ctx, step["settings"])
+            steps.append((i, step_instance))
 
         for _, step in sorted(steps, key=lambda x: x[0]):
             yield step
 
-    async def queue(self, controller: List[str]):
+    async def queue(self, controller: List[Dict[str, Any]]):
         results: List[Tuple[csn.Image, str]] = []
         with csn.Workflow(queue=False) as wf:
             _, _, _, _, _, latent, _ = csn.CRAspectRatio(
@@ -419,9 +422,11 @@ class CharacterWorkflow:
 
             state = WorkflowState(latent=latent, image=image)
 
-            for step in self.iter_wf(controller):
+            for i, step in enumerate(self.iter_wf(controller)):
                 state = step.run(state)
-                results.append((csn.PreviewImage(state.image), step.metadata.label))
+                results.append(
+                    (csn.PreviewImage(state.image), i + 1, step.metadata.label)
+                )
 
         await wf._queue()
 

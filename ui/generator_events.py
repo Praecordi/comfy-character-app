@@ -11,8 +11,6 @@ from utils import make_character_description, make_name, make_key
 from ui import PREVIEW_REFRESH_RATE, OUTPUT_REFRESH_RATE
 from ui.runner import WorkflowRunner
 
-from workflow.steps import get_steps
-
 
 def bind_events(
     block,
@@ -192,10 +190,6 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "style_prompt",
         "use_detail_daemon",
         "process_controller",
-        "latent_scale",
-        "latent_adherence",
-        "image_scale",
-        "image_adherence",
         "base_seed",
         "perturb_seed",
         "controlnet_image",
@@ -257,10 +251,6 @@ def _bind_local_storage(
         "style_prompt",
         "use_detail_daemon",
         "process_controller",
-        "latent_scale",
-        "latent_adherence",
-        "image_scale",
-        "image_adherence",
         "base_seed",
         "perturb_seed",
         "positive_prompt",
@@ -283,10 +273,6 @@ def _bind_local_storage(
         "style_prompt",
         "use_detail_daemon",
         "process_controller",
-        "latent_scale",
-        "latent_adherence",
-        "image_scale",
-        "image_adherence",
         "base_seed",
         "perturb_seed",
         "controlnet_image",
@@ -340,11 +326,7 @@ def _bind_local_storage(
             state.get("enable_style", True),
             state.get("style_prompt", ""),
             state.get("use_detail_daemon", False),
-            state.get("process_controller", get_steps()),
-            state.get("latent_scale", 1.6),
-            state.get("latent_adherence", 0.2),
-            state.get("image_scale", 1.3),
-            state.get("image_adherence", 0.9),
+            state.get("process_controller", {}),
             state.get("base_seed", -1),
             state.get("perturb_seed", -1),
             gr.update(),
