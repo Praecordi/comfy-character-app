@@ -2,7 +2,7 @@ from typing import Dict
 import gradio as gr
 
 from comfy_nodes import queue
-import constants
+from constants import characters, comfyui_input, comfyui_output
 
 from ui import PREVIEW_REFRESH_RATE
 from ui.runner import WorkflowRunner
@@ -26,9 +26,10 @@ def bind_events(
     _bind_preview_refresh(components, runner)
 
 
-def on_character_change(character):
+def on_character_change(character, character_state):
     if character == "Custom":
         return (
+            gr.update(),
             gr.update(value="", interactive=True),
             gr.update(value="", interactive=True),
             gr.update(value="", interactive=True),
@@ -38,27 +39,27 @@ def on_character_change(character):
         )
     else:
         char_key = make_key(character)
-        if char_key not in constants.characters:
-            char_key = list(constants.characters.keys())[0]
+        if char_key not in character_state:
+            char_key = list(character_state.keys())[0]
 
-        if isinstance(constants.characters[char_key]["face_reference"], list):
+        if isinstance(character_state[char_key]["face_reference"], list):
             reference = [
-                str(constants.comfyui_input / ref)
-                for ref in constants.characters[char_key]["face_reference"]
+                str(comfyui_input / ref)
+                for ref in character_state[char_key]["face_reference"]
             ]
         else:
             reference = [
-                str(
-                    constants.comfyui_input
-                    / constants.characters[char_key]["face_reference"]
-                )
+                str(comfyui_input / character_state[char_key]["face_reference"])
             ]
 
+        new_choices = [make_name(key) for key in character_state.keys()] + ["Custom"]
+
         return (
-            gr.update(value=constants.characters[char_key]["face"], interactive=False),
-            gr.update(value=constants.characters[char_key]["skin"], interactive=False),
-            gr.update(value=constants.characters[char_key]["hair"], interactive=False),
-            gr.update(value=constants.characters[char_key]["eyes"], interactive=False),
+            gr.update(choices=new_choices),
+            gr.update(value=character_state[char_key]["face"], interactive=False),
+            gr.update(value=character_state[char_key]["skin"], interactive=False),
+            gr.update(value=character_state[char_key]["hair"], interactive=False),
+            gr.update(value=character_state[char_key]["eyes"], interactive=False),
             gr.update(
                 value=reference,
                 interactive=False,
@@ -82,9 +83,36 @@ def on_image_change(image):
         return gr.update(interactive=True)
 
 
+def on_image_save(state, index):
+    if index >= len(state):
+        return "No image selected"
+
+    image, _, _, meta = state[index]
+
+    save_dir = comfyui_output / "ccw"
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    gen_id = meta.get("id", "unk")
+    char = make_key(str(meta.get("char", "unk")))
+    step = make_key(str(meta.get("step", "unk")))
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    base_name = f"gen{gen_id}_{char}_{step}_{ts}"
+    img_path = save_dir / f"{base_name}.webp"
+    json_path = save_dir / f"{base_name}.json"
+
+    image.save(img_path, "WEBP")
+
+    with open(json_path, "w") as f:
+        json.dump(meta["prompt"], f, indent=2)
+
+    gr.Info(f"Saved {img_path.name} and {json_path.name} to {save_dir}", duration=5)
+
+
 def _bind_character_change(components: Dict[str, gr.Component]):
-    input_keys = ["character"]
+    input_keys = ["character", "character_state"]
     output_keys = [
+        "character",
         "face_prompt",
         "skin_prompt",
         "hair_prompt",
@@ -94,6 +122,12 @@ def _bind_character_change(components: Dict[str, gr.Component]):
     ]
 
     components["character"].change(
+        on_character_change,
+        inputs=[components[x] for x in input_keys],
+        outputs=[components[x] for x in output_keys],
+    )
+
+    components["character_state"].change(
         on_character_change,
         inputs=[components[x] for x in input_keys],
         outputs=[components[x] for x in output_keys],
@@ -265,11 +299,9 @@ def _bind_local_storage(
     def load_state(state):
         state = state or {}
         checkpoint = state.get("checkpoint", checkpoints[0][1])
-        character = state.get(
-            "character", list(constants.characters.keys())[0].capitalize()
-        )
+        character = state.get("character", list(characters.keys())[0].capitalize())
 
-        char_tuple = on_character_change(character)
+        char_tuple = on_character_change(character, characters)
         disable = any(
             x in checkpoint for x in ["Lightning", "Hyper4S", "Hyper8S", "Turbo"]
         )
@@ -298,11 +330,11 @@ def _bind_local_storage(
             gr.update(value=70, interactive=False),
             gr.update(),
             gr.update(value=70, interactive=False),
-            char_tuple[0],
             char_tuple[1],
             char_tuple[2],
             char_tuple[3],
             char_tuple[4],
+            char_tuple[5],
             state.get("swap_method", "instantid"),
             state.get("positive_prompt", ""),
             state.get("negative_prompt", ""),

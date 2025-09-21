@@ -7,6 +7,7 @@ from ui.runner import WorkflowRunner
 from ui.layout import MainLayout, CharacterManagerLayout
 from ui.generator_events import bind_events as bind_generator_events
 from ui.cm_events import bind_events as bind_cm_events
+from constants import characters
 
 
 class UI:
@@ -37,10 +38,19 @@ class UI:
                 storage_key="ccw-ui-state", secret="ccw-secret"
             )
 
+            components = {
+                **main_components,
+                **cm_components,
+                "browser_state": gr.BrowserState(
+                    storage_key="ccw-ui-state", secret="ccw-secret"
+                ),
+                "character_state": gr.State(characters),
+            }
+
             bind_generator_events(
-                demo, main_components, self.runner, self.checkpoints, self.resolutions
+                demo, components, self.runner, self.checkpoints, self.resolutions
             )
 
-            bind_cm_events(demo, cm_components)
+            bind_cm_events(demo, components)
 
         return demo

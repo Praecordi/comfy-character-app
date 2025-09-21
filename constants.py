@@ -16,46 +16,9 @@ comfyui_output = comfyui_installation / "output"
 comfyui_temp = comfyui_installation / "temp"
 
 with open(characters_config, encoding="utf-8") as f:
-    original_characters = json.load(f)
-
-characters = deepcopy(original_characters)
+    characters = json.load(f)
 
 
-def reset_character(key):
-    global characters
-    if key not in original_characters:
-        del characters[key]
-        return None
-    else:
-        characters[key] = deepcopy(original_characters[key])
-        return key
-
-
-def reset_all_characters():
-    global characters
-    characters = deepcopy(original_characters)
-
-
-def save_character(key):
-    global characters, original_characters
-    original_characters[key] = characters[key]
-
+def save_character(state):
     with open(characters_config, mode="w", encoding="utf-8") as f:
-        json.dump(original_characters, f, indent=2)
-
-
-def save_all_characters():
-    global characters, original_characters
-    original_characters = deepcopy(characters)
-
-    with open(characters_config, mode="w", encoding="utf-8") as f:
-        json.dump(original_characters, f, indent=2)
-
-
-def delete_character(key):
-    global characters, original_characters
-    del characters[key]
-    del original_characters[key]
-
-    with open(characters_config, mode="w", encoding="utf-8") as f:
-        json.dump(original_characters, f, indent=2)
+        json.dump(state, f, indent=2)

@@ -1,6 +1,6 @@
 import gradio as gr
 
-import constants
+from constants import characters
 from workflow.steps import get_steps
 from ui.utils import make_name
 from ui.cm_events import delete_field, update_field
@@ -178,9 +178,7 @@ class MainLayout:
 
     @staticmethod
     def create_character_settings():
-        character_choices = [
-            make_name(char) for char in constants.characters.keys()
-        ] + ["Custom"]
+        character_choices = [make_name(char) for char in characters.keys()] + ["Custom"]
 
         with gr.Group():
             gr.Markdown("Character Settings", container=True)
@@ -405,9 +403,10 @@ class CharacterManagerLayout:
 
     @staticmethod
     def create_panel():
-        character_choices = [make_name(char) for char in constants.characters.keys()]
+        character_choices = [make_name(char) for char in characters.keys()]
 
         current_fields = gr.State(value={})
+        current_character_state = gr.State(value={})
 
         with gr.Row():
             with gr.Column():
@@ -463,13 +462,23 @@ class CharacterManagerLayout:
 
                     comps["value"].change(
                         update_field,
-                        inputs=[comps["attribute"], comps["value"], character_select],
+                        inputs=[
+                            comps["attribute"],
+                            comps["value"],
+                            character_select,
+                            current_character_state,
+                        ],
+                        outputs=[current_character_state],
                     )
 
                     comps["button"].click(
                         delete_field,
-                        inputs=[comps["attribute"], character_select],
-                        outputs=[current_fields],
+                        inputs=[
+                            comps["attribute"],
+                            character_select,
+                            current_character_state,
+                        ],
+                        outputs=[current_fields, current_character_state],
                     )
 
         with gr.Row():
@@ -484,17 +493,18 @@ class CharacterManagerLayout:
             "new_character": new_char,
             "add_character_btn": add_char,
             "remove_character_btn": remove_char,
-            "face_images": face_images,
-            "base_prompt": base_prompt,
-            "face_prompt": face_prompt,
-            "skin_prompt": skin_prompt,
-            "hair_prompt": hair_prompt,
-            "eyes_prompt": eyes_prompt,
+            "cm_face_images": face_images,
+            "cm_base_prompt": base_prompt,
+            "cm_face_prompt": face_prompt,
+            "cm_skin_prompt": skin_prompt,
+            "cm_hair_prompt": hair_prompt,
+            "cm_eyes_prompt": eyes_prompt,
             "new_field": new_field,
             "add_field_btn": add_field_btn,
             "save_btn": save_btn,
             "reset_btn": reset_btn,
             "current_fields": current_fields,
+            "current_character_state": current_character_state,
         }
 
     @staticmethod

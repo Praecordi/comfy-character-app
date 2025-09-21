@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 import gradio as gr
 
-import constants
+from constants import characters, comfyui_input, save_character
 from ui.utils import make_key, make_name
 
 
@@ -18,23 +18,25 @@ def _make_fields(character):
 
 
 def load_initial():
-    character_choices = [
-        char.replace("_", " ").title() for char in constants.characters.keys()
-    ]
+    character_choices = [make_name(char) for char in characters.keys()]
 
-    return gr.update(value=character_choices[0])
+    return (
+        character_choices[0],
+        characters,
+        *on_character_change(character_choices[0], characters),
+    )
 
 
-def on_character_change(character: str):
+def on_character_change(character: str, character_state: dict):
     char_key = make_key(character)
 
-    char_dict = deepcopy(constants.characters[char_key])
+    char_dict = deepcopy(character_state[char_key])
 
     face_images = char_dict.pop("face_reference", [])
     if isinstance(face_images, list):
-        face_images = [str(constants.comfyui_input / ref) for ref in face_images]
+        face_images = [str(comfyui_input / ref) for ref in face_images]
     else:
-        face_images = [str(constants.comfyui_input / face_images)]
+        face_images = [str(comfyui_input / face_images)]
 
     base_prompt = char_dict.pop("base", "")
     face_prompt = char_dict.pop("face", "")
@@ -42,32 +44,49 @@ def on_character_change(character: str):
     hair_prompt = char_dict.pop("hair", "")
     eyes_prompt = char_dict.pop("eyes", "")
 
-    return char_dict, face_images, base_prompt, face_prompt, skin_prompt, hair_prompt, eyes_prompt
+    return (
+        char_dict,
+        face_images,
+        base_prompt,
+        face_prompt,
+        skin_prompt,
+        hair_prompt,
+        eyes_prompt,
+    )
 
 
-def reset(character):
+def reset(character, current_character_state, character_state):
     char_key = make_key(character)
-    res = constants.reset_character(char_key)
-
-    if res:
-        return gr.update(value=character), *on_character_change(character)
+    if char_key not in character_state:
+        del current_character_state[char_key]
     else:
-        new_choices = [make_name(char) for char in constants.characters.keys()]
+        current_character_state[char_key] = deepcopy(character_state[char_key])
 
-        return gr.update(
-            value=new_choices[0], choices=new_choices
-        ), *on_character_change(new_choices[0])
+    if char_key in current_character_state:
+        return (
+            gr.update(value=character),
+            current_character_state,
+            *on_character_change(character, current_character_state),
+        )
+    else:
+        new_choices = [make_name(char) for char in character_state.keys()]
+
+        return (
+            gr.update(value=new_choices[0], choices=new_choices),
+            current_character_state,
+            *on_character_change(new_choices[0], current_character_state),
+        )
 
 
-def save(character, face_gallery):
+def save(character, current_character_state, character_state, face_gallery):
     if not character or character == "":
         gr.Warning("Please select a character first")
-        return gr.update()
+        return gr.update(), current_character_state
 
     char_key = make_key(character)
-    if char_key not in constants.characters:
+    if char_key not in current_character_state:
         gr.Warning(f"Character {character} not found")
-        return gr.update()
+        return gr.update(), current_character_state
 
     processed_files = []
     face_refs = []
@@ -76,39 +95,41 @@ def save(character, face_gallery):
         for file_path in face_gallery:
             src = Path(file_path[0])
 
-            if src.parent == constants.comfyui_input:
+            if src.parent.absolute == comfyui_input.absolute:
                 processed_files.append(str(src))
                 face_refs.append(src.name)
                 continue
 
             dest_name = src.name
-            dest_path = constants.comfyui_input / dest_name
+            dest_path = comfyui_input / dest_name
             counter = 1
 
-            while dest_path.exists():
+            while not dest_path.exists():
                 stem = src.stem
                 suffix = src.suffix
                 dest_name = f"{stem}_{counter}{suffix}"
-                dest_path = constants.comfyui_input / dest_name
+                dest_path = comfyui_input / dest_name
                 counter += 1
 
             shutil.move(str(src), str(dest_path))
             processed_files.append(str(dest_path))
             face_refs.append(dest_name)
 
-        constants.characters[char_key]["face_reference"] = face_refs
+        current_character_state[char_key]["face_reference"] = face_refs
     else:
-        constants.characters[char_key]["face_reference"] = []
+        current_character_state[char_key]["face_reference"] = []
 
-    constants.save_character(char_key)
+    character_state[char_key] = current_character_state[char_key]
 
-    return processed_files
+    save_character(character_state)
+
+    return processed_files, current_character_state, character_state
 
 
-def add_character(character):
+def add_character(character, current_character_state):
     char_key = make_key(character)
 
-    if char_key in constants.characters.keys():
+    if char_key in current_character_state.keys():
         gr.Warning("Character already exists", duration=10)
         return gr.update(), gr.update()
 
@@ -125,77 +146,86 @@ def add_character(character):
         "eyes": "",
     }
 
-    constants.characters[char_key] = char_dict
+    current_character_state[char_key] = char_dict
 
     new_choices = [
-        char.replace("_", " ").title() for char in constants.characters.keys()
+        char.replace("_", " ").title() for char in current_character_state.keys()
     ]
 
-    return gr.update(value=""), gr.update(
-        value=make_name(char_key), choices=new_choices
+    return (
+        gr.update(value=""),
+        current_character_state,
+        gr.update(value=make_name(char_key), choices=new_choices),
     )
 
 
-def remove_character(character):
+def remove_character(character, current_character_state, character_state):
     char_key = make_key(character)
 
-    constants.delete_character(char_key)
+    del current_character_state[char_key]
+    del character_state[char_key]
 
-    new_choices = [
-        char.replace("_", " ").title() for char in constants.characters.keys()
-    ]
+    save_character(character_state)
 
-    return gr.update(value=new_choices[0], choices=new_choices)
+    new_choices = [char.replace("_", " ").title() for char in character_state.keys()]
+
+    return (
+        gr.update(value=new_choices[0], choices=new_choices),
+        current_character_state,
+        character_state,
+    )
 
 
-def add_field(attribute, character):
+def add_field(attribute, character, current_character_state):
     char_key = make_key(character)
     attr_key = make_key(attribute)
 
-    if char_key not in constants.characters:
+    if char_key not in current_character_state:
         gr.Warning(f"Character {character} does not exist...")
-        return gr.update(value=""), gr.update("")
+        return gr.update(value=""), gr.update(""), current_character_state
 
-    if attr_key in constants.characters[char_key]:
+    if attr_key in current_character_state:
         gr.Warning(f"Attribute {attribute} already exists...")
-        return gr.update(value=""), gr.update()
+        return gr.update(value=""), gr.update(), current_character_state
 
     if attr_key == "":
         gr.Warning("Please provide non-empty field")
-        return gr.update(value=""), gr.update()
+        return gr.update(value=""), gr.update(), current_character_state
 
-    constants.characters[char_key][attr_key] = ""
+    current_character_state[char_key][attr_key] = ""
 
-    fields = _make_fields(constants.characters[char_key])
+    fields = _make_fields(current_character_state[char_key])
 
-    return gr.update(value=""), fields
+    return gr.update(value=""), fields, current_character_state
 
 
-def delete_field(attribute, character):
+def delete_field(attribute, character, current_character_state):
     char_key = make_key(character)
     attr_key = make_key(attribute)
 
-    if char_key not in constants.characters:
+    if char_key not in current_character_state:
         gr.Warning(f"Character {character} doesn't exist")
-        return gr.update()
+        return gr.update(), current_character_state
 
-    if attr_key in constants.characters[char_key]:
-        del constants.characters[char_key][attr_key]
+    if attr_key in current_character_state[char_key]:
+        del current_character_state[char_key][attr_key]
 
-    fields = _make_fields(constants.characters[char_key])
+    fields = _make_fields(current_character_state[char_key])
 
-    return fields
+    return fields, current_character_state
 
 
-def update_field(attribute, value, character):
+def update_field(attribute, value, character, current_character_state):
     char_key = make_key(character)
 
-    if char_key not in constants.characters:
+    if char_key not in current_character_state:
         gr.Warning(f"Character {character} not found")
         return
 
     attr_key = make_key(attribute)
-    constants.characters[char_key][attr_key] = value
+    current_character_state[char_key][attr_key] = value
+
+    return current_character_state
 
 
 def bind_events(block, components):
@@ -203,22 +233,40 @@ def bind_events(block, components):
     _bind_buttons(components)
     _bind_attribute_changes(components)
 
-    block.load(load_initial, outputs=[components["character_select"]])
+    initial_output_keys = [
+        "character_select",
+        "current_character_state",
+        "current_fields",
+        "cm_face_images",
+        "cm_base_prompt",
+        "cm_face_prompt",
+        "cm_skin_prompt",
+        "cm_hair_prompt",
+        "cm_eyes_prompt",
+    ]
+
+    block.load(load_initial, outputs=[components[x] for x in initial_output_keys])
 
 
 def _bind_character_change(components: Dict[str, gr.Component]):
-    input_keys = ["character_select"]
+    input_keys = ["character_select", "current_character_state"]
     output_keys = [
         "current_fields",
-        "face_images",
-        "base_prompt",
-        "face_prompt",
-        "skin_prompt",
-        "hair_prompt",
-        "eyes_prompt",
+        "cm_face_images",
+        "cm_base_prompt",
+        "cm_face_prompt",
+        "cm_skin_prompt",
+        "cm_hair_prompt",
+        "cm_eyes_prompt",
     ]
 
     components["character_select"].change(
+        on_character_change,
+        inputs=[components[x] for x in input_keys],
+        outputs=[components[x] for x in output_keys],
+    )
+
+    components["character_state"].change(
         on_character_change,
         inputs=[components[x] for x in input_keys],
         outputs=[components[x] for x in output_keys],
@@ -228,79 +276,150 @@ def _bind_character_change(components: Dict[str, gr.Component]):
 def _bind_buttons(components: Dict[str, gr.Component]):
     reset_output_keys = [
         "character_select",
+        "current_character_state",
         "current_fields",
-        "face_images",
-        "base_prompt",
-        "face_prompt",
-        "skin_prompt",
-        "hair_prompt",
-        "eyes_prompt",
+        "cm_face_images",
+        "cm_base_prompt",
+        "cm_face_prompt",
+        "cm_skin_prompt",
+        "cm_hair_prompt",
+        "cm_eyes_prompt",
     ]
     components["reset_btn"].click(
         reset,
-        inputs=[components["character_select"]],
+        inputs=[
+            components["character_select"],
+            components["current_character_state"],
+            components["character_state"],
+        ],
         outputs=[components[x] for x in reset_output_keys],
     )
 
     components["save_btn"].click(
         save,
-        inputs=[components["character_select"], components["face_images"]],
-        outputs=[components["face_images"]],
+        inputs=[
+            components["character_select"],
+            components["current_character_state"],
+            components["character_state"],
+            components["cm_face_images"],
+        ],
+        outputs=[
+            components["cm_face_images"],
+            components["current_character_state"],
+            components["character_state"],
+        ],
     )
 
     components["new_character"].submit(
         add_character,
-        inputs=[components["new_character"]],
-        outputs=[components["new_character"], components["character_select"]],
+        inputs=[components["new_character"], components["current_character_state"]],
+        outputs=[
+            components["new_character"],
+            components["current_character_state"],
+            components["character_select"],
+        ],
     )
 
     components["add_character_btn"].click(
         add_character,
-        inputs=[components["new_character"]],
-        outputs=[components["new_character"], components["character_select"]],
+        inputs=[components["new_character"], components["current_character_state"]],
+        outputs=[
+            components["new_character"],
+            components["current_character_state"],
+            components["character_select"],
+        ],
     )
 
     components["remove_character_btn"].click(
         remove_character,
-        inputs=[components["character_select"]],
-        outputs=[components["character_select"]],
+        inputs=[
+            components["character_select"],
+            components["current_character_state"],
+            components["character_state"],
+        ],
+        outputs=[
+            components["character_select"],
+            components["current_character_state"],
+            components["character_state"],
+        ],
     )
 
     components["new_field"].submit(
         add_field,
-        inputs=[components["new_field"], components["character_select"]],
-        outputs=[components["new_field"], components["current_fields"]],
+        inputs=[
+            components["new_field"],
+            components["character_select"],
+            components["current_character_state"],
+        ],
+        outputs=[
+            components["new_field"],
+            components["current_fields"],
+            components["current_character_state"],
+        ],
     )
 
     components["add_field_btn"].click(
         add_field,
-        inputs=[components["new_field"], components["character_select"]],
-        outputs=[components["new_field"], components["current_fields"]],
+        inputs=[
+            components["new_field"],
+            components["character_select"],
+            components["current_character_state"],
+        ],
+        outputs=[
+            components["new_field"],
+            components["current_fields"],
+            components["current_character_state"],
+        ],
     )
 
 
 def _bind_attribute_changes(components: Dict[str, gr.Component]):
-    components["base_prompt"].change(
-        lambda value, char: update_field("base", value, char),
-        inputs=[components["base_prompt"], components["character_select"]],
+    components["cm_base_prompt"].change(
+        lambda value, char, char_state: update_field("base", value, char, char_state),
+        inputs=[
+            components["cm_base_prompt"],
+            components["character_select"],
+            components["current_character_state"],
+        ],
+        outputs=[components["current_character_state"]],
     )
 
-    components["face_prompt"].change(
-        lambda value, char: update_field("face", value, char),
-        inputs=[components["face_prompt"], components["character_select"]],
+    components["cm_face_prompt"].change(
+        lambda value, char, char_state: update_field("face", value, char, char_state),
+        inputs=[
+            components["cm_face_prompt"],
+            components["character_select"],
+            components["current_character_state"],
+        ],
+        outputs=[components["current_character_state"]],
     )
 
-    components["skin_prompt"].change(
-        lambda value, char: update_field("skin", value, char),
-        inputs=[components["skin_prompt"], components["character_select"]],
+    components["cm_skin_prompt"].change(
+        lambda value, char, char_state: update_field("skin", value, char, char_state),
+        inputs=[
+            components["cm_skin_prompt"],
+            components["character_select"],
+            components["current_character_state"],
+        ],
+        outputs=[components["current_character_state"]],
     )
 
-    components["hair_prompt"].change(
-        lambda value, char: update_field("hair", value, char),
-        inputs=[components["hair_prompt"], components["character_select"]],
+    components["cm_hair_prompt"].change(
+        lambda value, char, char_state: update_field("hair", value, char, char_state),
+        inputs=[
+            components["cm_hair_prompt"],
+            components["character_select"],
+            components["current_character_state"],
+        ],
+        outputs=[components["current_character_state"]],
     )
 
-    components["eyes_prompt"].change(
-        lambda value, char: update_field("eyes", value, char),
-        inputs=[components["eyes_prompt"], components["character_select"]],
+    components["cm_eyes_prompt"].change(
+        lambda value, char, char_state: update_field("eyes", value, char, char_state),
+        inputs=[
+            components["cm_eyes_prompt"],
+            components["character_select"],
+            components["current_character_state"],
+        ],
+        outputs=[components["current_character_state"]],
     )
