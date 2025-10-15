@@ -11,6 +11,12 @@ class ImageUpscaleStep(WorkflowStep):
         label="Image Upscale",
         order=6,
         parameters={
+            "concat_conditioning": {
+                "type": "checkboxgroup",
+                "label": "Concat Conditioning",
+                "choices": ["Skin", "Face", "Hair", "Eyes"],
+                "value": [],
+            },
             "image_scale": {
                 "minimum": 1,
                 "maximum": 2,
@@ -37,8 +43,18 @@ class ImageUpscaleStep(WorkflowStep):
     )
 
     def _init(
-        self, image_scale=None, image_adherence=None, cfg=None, use_instantid=None
+        self,
+        concat_conditioning=None,
+        image_scale=None,
+        image_adherence=None,
+        cfg=None,
+        use_instantid=None,
     ):
+        self.concat_conditioning = (
+            concat_conditioning
+            if concat_conditioning
+            else self.metadata.parameters["concat_conditionings"]["value"]
+        )
         self.image_scale = (
             image_scale
             if image_scale
@@ -87,10 +103,15 @@ class ImageUpscaleStep(WorkflowStep):
 
         image = state.image
 
-        positive = ConditioningConcat(ctx.positive_conditioning, ctx.eyes_conditioning)
-        positive = ConditioningConcat(positive, ctx.skin_conditioning)
-        positive = ConditioningConcat(positive, ctx.hair_conditioning)
-        positive = ConditioningConcat(positive, ctx.face_conditioning)
+        positive = ctx.positive_conditioning
+        if "Eyes" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.eyes_conditioning)
+        if "Skin" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.skin_conditioning)
+        if "Hair" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.hair_conditioning)
+        if "Face" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.face_conditioning)
 
         if self.use_instantid:
             model, positive, negative = ApplyInstantIDAdvanced(

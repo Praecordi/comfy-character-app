@@ -151,6 +151,11 @@ class MainLayout:
                                 **el_params,
                                 key=f"{label}{idx}_checkbox",
                             )
+                        elif params["type"] == "checkboxgroup":
+                            param_element = gr.CheckboxGroup(
+                                **el_params,
+                                key=f"{label}{idx}_checkboxgroup",
+                            )
                         elif params["type"] == "number":
                             param_element = gr.Number(
                                 **el_params,

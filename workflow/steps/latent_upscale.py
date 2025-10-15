@@ -11,6 +11,12 @@ class LatentUpscaleStep(WorkflowStep):
         label="Latent Upscale",
         order=1,
         parameters={
+            "concat_conditioning": {
+                "type": "checkboxgroup",
+                "label": "Concat Conditioning",
+                "choices": ["Skin", "Face", "Hair", "Eyes"],
+                "value": [],
+            },
             "latent_scale": {
                 "minimum": 1,
                 "maximum": 2,
@@ -37,8 +43,18 @@ class LatentUpscaleStep(WorkflowStep):
     )
 
     def _init(
-        self, latent_scale=None, latent_adherence=None, cfg=None, use_instantid=None
+        self,
+        concat_conditioning=None,
+        latent_scale=None,
+        latent_adherence=None,
+        cfg=None,
+        use_instantid=None,
     ):
+        self.concat_conditioning = (
+            concat_conditioning
+            if concat_conditioning
+            else self.metadata.parameters["concat_conditionings"]["value"]
+        )
         self.latent_scale = (
             latent_scale
             if latent_scale
@@ -88,10 +104,15 @@ class LatentUpscaleStep(WorkflowStep):
         image = state.image
         latent = state.latent
 
-        positive = ConditioningConcat(ctx.positive_conditioning, ctx.eyes_conditioning)
-        positive = ConditioningConcat(positive, ctx.skin_conditioning)
-        positive = ConditioningConcat(positive, ctx.hair_conditioning)
-        positive = ConditioningConcat(positive, ctx.face_conditioning)
+        positive = ctx.positive_conditioning
+        if "Eyes" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.eyes_conditioning)
+        if "Skin" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.skin_conditioning)
+        if "Hair" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.hair_conditioning)
+        if "Face" in self.concat_conditioning:
+            positive = ConditioningConcat(positive, ctx.face_conditioning)
 
         if self.use_instantid:
             model, positive, negative = ApplyInstantIDAdvanced(
