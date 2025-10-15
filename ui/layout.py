@@ -124,21 +124,37 @@ class MainLayout:
 
             return _update
 
-        def render_step_at(idx, step_name, step_options):
-            with gr.Row():
-                with gr.Column(scale=4), gr.Accordion(step_name, open=False):
-                    gr.Markdown(
-                        f"{idx+1}. Settings for **{step_name}**", key=f"md{idx}"
-                    )
-
+        def render_step_at(idx, step_name, step_settings, step_options):
+            with gr.Row(key=f"{idx}row"):
+                with gr.Column(scale=4, key=f"{idx}col"), gr.Accordion(
+                    f"{idx+1}. {step_name}", open=False, key=f"{idx}step"
+                ):
                     for label, params in step_options[step_name].items():
+                        el_params = {k: v for k, v in params.items() if not k == "type"}
+                        el_params["value"] = (
+                            step_settings[label]
+                            if label in step_settings
+                            else el_params["value"]
+                        )
                         if params["type"] == "slider":
-                            el_params = {
-                                k: v for k, v in params.items() if not k == "type"
-                            }
                             param_element = gr.Slider(
                                 **el_params,
                                 key=f"{label}{idx}_slider",
+                            )
+                        elif params["type"] == "radio":
+                            param_element = gr.Radio(
+                                **el_params,
+                                key=f"{label}{idx}_radio",
+                            )
+                        elif params["type"] == "checkbox":
+                            param_element = gr.Checkbox(
+                                **el_params,
+                                key=f"{label}{idx}_checkbox",
+                            )
+                        elif params["type"] == "number":
+                            param_element = gr.Number(
+                                **el_params,
+                                key=f"{label}{idx}_number",
                             )
                         else:
                             continue
@@ -180,7 +196,7 @@ class MainLayout:
             def render_step_settings(controller):
                 with gr.Column():
                     for i, step in enumerate(controller):
-                        render_step_at(i, step["step"], step_options)
+                        render_step_at(i, step["step"], step["settings"], step_options)
 
         return {"process_controller": process_controller}
 
@@ -254,24 +270,11 @@ class MainLayout:
 
     @staticmethod
     def create_character_settings():
-        character_choices = [make_name(char) for char in characters.keys()] + ["Custom"]
+        character_choices = [make_name(char) for char in characters.keys()]
 
         with gr.Group():
             gr.Markdown("Character Settings", container=True)
-            with gr.Row(equal_height=True):
-                with gr.Column(scale=1):
-                    character = gr.Dropdown(
-                        label="Character", choices=character_choices
-                    )
-                with gr.Column(scale=3):
-                    swap_method = gr.Radio(
-                        choices=[
-                            ("Use InstantID", "instantid"),
-                            ("Use ReActor", "reactor"),
-                            ("Use Prompt Only", "prompt"),
-                        ],
-                        label="Face Swap method",
-                    )
+            character = gr.Dropdown(label="Character", choices=character_choices)
 
             with gr.Row(equal_height=True):
                 with gr.Column(scale=1), gr.Accordion(
@@ -334,7 +337,6 @@ class MainLayout:
             "hair_prompt": hair_prompt,
             "eyes_prompt": eyes_prompt,
             "face_images": face_images,
-            "swap_method": swap_method,
         }
 
     @staticmethod

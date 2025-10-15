@@ -119,3 +119,25 @@ def make_key(name):
 
 def make_name(key):
     return key.replace("_", " ").title()
+
+
+def scale_steps(base_step, scale, max=30):
+    if isinstance(base_step, tuple):
+        scaled_steps = tuple(
+            round(1 + (x - 1) * (scale - 1) / (max - 1)) for x in base_step
+        )
+    else:
+        scaled_steps = round(1 + (base_step - 1) * (scale - 1) / (max - 1))
+
+    return scaled_steps
+
+
+def scale_cfg(base_cfg, scale, max=8):
+    if isinstance(base_cfg, tuple):
+        scaled_cfg = tuple(
+            round(1 + (x - 1) * (scale - 1) / (max - 1), 2) for x in base_cfg
+        )
+    else:
+        scaled_cfg = round(1 + (base_cfg - 1) * (scale - 1) / (max - 1), 2)
+
+    return scaled_cfg

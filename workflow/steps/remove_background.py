@@ -18,6 +18,7 @@ class ImageUpscaleStep(WorkflowStep):
             LayerMaskRmBgUltraV2.detail_method.VITMatte,
             detail_dilate=18,
             detail_erode=18,
+            device=LayerMaskRmBgUltraV2.device.cpu,
         )
 
         latent = VAEEncode(image, ctx.vae)

@@ -1,5 +1,6 @@
 from comfy_nodes import *
 
+from utils import scale_cfg, scale_steps
 from workflow.state import WorkflowState
 from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
@@ -26,12 +27,60 @@ class LatentUpscaleStep(WorkflowStep):
                 "label": "Latent Upscale Adherence",
                 "type": "slider",
             },
+            "cfg": {"type": "number", "label": "CFG", "value": 8},
+            "use_instantid": {
+                "type": "checkbox",
+                "value": True,
+                "label": "Use InstantID",
+            },
         },
     )
 
-    def _init(self, latent_scale, latent_adherence):
-        self.latent_scale = latent_scale
-        self.latent_adherence = latent_adherence
+    def _init(
+        self, latent_scale=None, latent_adherence=None, cfg=None, use_instantid=None
+    ):
+        self.latent_scale = (
+            latent_scale
+            if latent_scale
+            else self.metadata.parameters["latent_scale"]["value"]
+        )
+        self.latent_adherence = (
+            latent_adherence
+            if latent_adherence
+            else self.metadata.parameters["latent_adherence"]["value"]
+        )
+        self.use_instantid = (
+            use_instantid
+            if use_instantid
+            else self.metadata.parameters["use_instantid"]["value"]
+        )
+
+        if self.latent_scale < 1.25:
+            base_step = (30, 20)
+            base_cfg = (8, 4)
+        elif self.latent_scale < 1.5:
+            base_step = (20, 15)
+            base_cfg = (8, 4)
+        elif self.latent_scale < 1.75:
+            base_step = (20, 10)
+            base_cfg = (6, 2)
+        else:
+            base_step = (15, 5)
+            base_cfg = (4, 2)
+
+        if self.ctx.type in ["Lightning", "Hyper4S"]:
+            step_scale = 6
+        elif self.ctx.type in ["Hyper8S", "Turbo"]:
+            step_scale = 10
+        elif self.ctx.type == "fewsteplora":
+            step_scale = 8
+        else:
+            step_scale = 30
+
+        cfg_scale = cfg if cfg else self.metadata.parameters["cfg"]["value"]
+
+        self.steps = scale_steps(base_step, step_scale)
+        self.cfg = self._scale_cfg(scale_cfg(base_cfg, cfg_scale))
 
     def run(self, state: WorkflowState) -> WorkflowState:
         ctx = self.ctx
@@ -39,9 +88,38 @@ class LatentUpscaleStep(WorkflowStep):
         image = state.image
         latent = state.latent
 
+        positive = ConditioningConcat(ctx.positive_conditioning, ctx.eyes_conditioning)
+        positive = ConditioningConcat(positive, ctx.skin_conditioning)
+        positive = ConditioningConcat(positive, ctx.hair_conditioning)
+        positive = ConditioningConcat(positive, ctx.face_conditioning)
+
+        if self.use_instantid:
+            model, positive, negative = ApplyInstantIDAdvanced(
+                instantid=ctx.instantid,
+                insightface=ctx.faceanalysis,
+                control_net=ctx.instantid_cn,
+                image=ctx.face_image,
+                model=ctx.lora_model,
+                positive=positive,
+                negative=ctx.negative_conditioning,
+                ip_weight=0.8,
+                cn_strength=0.5,
+                start_at=0.7,
+                end_at=1.0,
+                noise=0.1,
+                combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
+                image_kps=image,
+            )
+        else:
+            model, positive, negative = (
+                ctx.lora_model,
+                positive,
+                ctx.negative_conditioning,
+            )
+
         cn_positive, cn_negative = ControlNetApplyAdvanced(
-            positive=ctx.positive_conditioning,
-            negative=ctx.negative_conditioning,
+            positive=positive,
+            negative=negative,
             control_net=ctx.cn,
             image=image,
             strength=self.latent_adherence,
@@ -67,11 +145,11 @@ class LatentUpscaleStep(WorkflowStep):
         latent = self._iterative_latent_upscale(
             latent=latent,
             scale=self.latent_scale,
-            model=ctx.lora_model,
+            model=model,
             positive=cn_positive,
             negative=cn_negative,
-            steps=ctx.steps["latent_upscale"],
-            cfg=self._scale_cfg(ctx.cfg["latent_upscale"]),
+            steps=self.steps,
+            cfg=self.cfg,
             denoise=denoise,
             num_iterations=num_iter,
             seed_offset=self.metadata.order,

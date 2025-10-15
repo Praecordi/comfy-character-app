@@ -6,6 +6,8 @@ from utils import (
     clean_prompt_string,
     build_conditioning_prompt,
     substitute_character_tokens,
+    scale_cfg,
+    scale_steps,
 )
 from workflow.steps import _STEP_REGISTRY, WorkflowStep
 from workflow.state import WorkflowContext, WorkflowState
@@ -15,24 +17,8 @@ class CharacterWorkflow:
     def __init__(self, ui_state: dict):
         self.ctx = WorkflowContext()
 
-        self.base_steps = {
-            "base_gen": 30,
-            "latent_upscale": (20, 10),
-            "detail_skin": (15, 10),
-            "detail_face": 15,
-            "detail_hair": (15, 10),
-            "detail_eyes": (15, 10),
-            "image_upscale": (15, 10),
-        }
-        self.base_cfg = {
-            "base_gen": 8,
-            "latent_upscale": (8, 4),
-            "detail_skin": (5, 3),
-            "detail_face": 4,
-            "detail_hair": (7, 5),
-            "detail_eyes": (6, 4),
-            "image_upscale": (4, 2),
-        }
+        self.base_step = 30
+        self.base_cfg = 8
 
         self._init_models(
             ui_state["checkpoint"],
@@ -70,9 +56,7 @@ class CharacterWorkflow:
         )
 
         self.ctx = self.ctx.update(
-            base_seed=ui_state["base_seed"],
-            perturb_seed=ui_state["perturb_seed"],
-            swap_method=ui_state["swap_method"],
+            base_seed=ui_state["base_seed"], perturb_seed=ui_state["perturb_seed"]
         )
 
     def _init_models(
@@ -82,19 +66,27 @@ class CharacterWorkflow:
         if "Lightning" in checkpoint:
             sampler_name = csn.Samplers.dpmpp_2s_ancestral
             scheduler_name = csn.Schedulers.normal
-            steps, cfg = self._generate_scaled_config(6, 2)
+            step = scale_steps(self.base_step, 6)
+            cfg = scale_cfg(self.base_cfg, 1)
+            type = "Lightning"
         elif "Hyper4S" in checkpoint:
             sampler_name = csn.Samplers.dpmpp_2s_ancestral
             scheduler_name = csn.Schedulers.normal
-            steps, cfg = self._generate_scaled_config(6, 2)
+            step = scale_steps(self.base_step, 6)
+            cfg = scale_cfg(self.base_cfg, 1)
+            type = "Hyper4S"
         elif "Hyper8S" in checkpoint:
             sampler_name = csn.Samplers.dpmpp_2s_ancestral
             scheduler_name = csn.Schedulers.normal
-            steps, cfg = self._generate_scaled_config(10, 2)
+            step = scale_steps(self.base_step, 6)
+            cfg = scale_cfg(self.base_cfg, 1)
+            type = "Hyper8S"
         elif "Turbo" in checkpoint:
             sampler_name = csn.Samplers.dpmpp_2s_ancestral
             scheduler_name = csn.Schedulers.normal
-            steps, cfg = self._generate_scaled_config(10, 2)
+            step = scale_steps(self.base_step, 6)
+            cfg = scale_cfg(self.base_cfg, 1)
+            type = "Turbo"
         else:
             if fewsteplora in ["lcm", "turbo", "dpo_turbo"]:
                 lora_map = {
@@ -110,12 +102,16 @@ class CharacterWorkflow:
                     strength_clip=1,
                 )
                 sampler_name = csn.Samplers.lcm
-                scheduler_name = csn.Schedulers.sgm_uniform
-                steps, cfg = self._generate_scaled_config(8, 2)
+                scheduler_name = csn.Schedulers.simple
+                step = scale_steps(self.base_step, 8)
+                cfg = scale_cfg(self.base_cfg, 1)
+                type = "fewsteplora"
             else:
                 sampler_name = csn.Samplers.dpmpp_2m_sde_gpu
                 scheduler_name = csn.Schedulers.karras
-                steps, cfg = self._generate_scaled_config(30, 8)
+                step = scale_steps(self.base_step, 30)
+                cfg = scale_cfg(self.base_cfg, 8)
+                type = "base"
 
         lora_model, lora_clip = model, clip
 
@@ -166,8 +162,9 @@ class CharacterWorkflow:
             sampler_name=sampler_name,
             scheduler_name=scheduler_name,
             sampler=sampler,
-            steps=steps,
+            step=step,
             cfg=cfg,
+            type=type,
             resolution=resolution,
             instantid=instantid,
             faceanalysis=faceanalysis,
@@ -373,27 +370,6 @@ class CharacterWorkflow:
                 hair_conditioning=new_hair_cond,
                 eyes_conditioning=new_eyes_cond,
             )
-
-    def _generate_scaled_config(self, n, k):
-        new_steps = {}
-        for key, val in self.base_steps.items():
-            if isinstance(val, tuple):
-                scaled_tuple = tuple(round(1 + (x - 1) * (n - 1) / 29) for x in val)
-                new_steps[key] = scaled_tuple
-            else:
-                scaled_val = round(1 + (val - 1) * (n - 1) / 29)
-                new_steps[key] = scaled_val
-
-        new_cfg = {}
-        for key, val in self.base_cfg.items():
-            if isinstance(val, tuple):
-                scaled_tuple = tuple(round(1 + (x - 1) * (k - 1) / 7, 2) for x in val)
-                new_cfg[key] = scaled_tuple
-            else:
-                scaled_val = round(1 + (val - 1) * (k - 1) / 7, 2)
-                new_cfg[key] = scaled_val
-
-        return new_steps, new_cfg
 
     def iter_wf(self, controller: List[Dict[str, Any]]) -> Iterator[WorkflowStep]:
         steps: List[Tuple[int, WorkflowStep]] = []

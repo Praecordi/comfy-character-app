@@ -1,5 +1,6 @@
 from comfy_nodes import *
 
+from utils import scale_steps, scale_cfg
 from workflow.state import WorkflowState
 from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
@@ -22,16 +23,64 @@ class ImageUpscaleStep(WorkflowStep):
                 "minimum": 0,
                 "maximum": 1,
                 "step": 0.05,
-                "value": 0.3,
+                "value": 0.8,
                 "label": "Image Upscale Adherence",
                 "type": "slider",
+            },
+            "cfg": {"type": "number", "label": "CFG", "value": 8},
+            "use_instantid": {
+                "type": "checkbox",
+                "value": True,
+                "label": "Use InstantID",
             },
         },
     )
 
-    def _init(self, image_scale, image_adherence):
-        self.image_scale = image_scale
-        self.image_adherence = image_adherence
+    def _init(
+        self, image_scale=None, image_adherence=None, cfg=None, use_instantid=None
+    ):
+        self.image_scale = (
+            image_scale
+            if image_scale
+            else self.metadata.parameters["image_scale"]["value"]
+        )
+        self.image_adherence = (
+            image_adherence
+            if image_adherence
+            else self.metadata.parameters["image_adherence"]["value"]
+        )
+        self.use_instantid = (
+            use_instantid
+            if use_instantid
+            else self.metadata.parameters["use_instantid"]["value"]
+        )
+
+        if self.image_scale < 1.25:
+            base_step = (30, 20)
+            base_cfg = (8, 4)
+        elif self.image_scale < 1.5:
+            base_step = (25, 15)
+            base_cfg = (8, 4)
+        elif self.image_scale < 1.75:
+            base_step = (20, 10)
+            base_cfg = (6, 2)
+        else:
+            base_step = (15, 5)
+            base_cfg = (4, 2)
+
+        if self.ctx.type in ["Lightning", "Hyper4S"]:
+            step_scale = 6
+        elif self.ctx.type in ["Hyper8S", "Turbo"]:
+            step_scale = 10
+        elif self.ctx.type == "fewsteplora":
+            step_scale = 8
+        else:
+            step_scale = 30
+
+        cfg_scale = cfg if cfg else self.metadata.parameters["cfg"]["value"]
+
+        self.steps = scale_steps(base_step, step_scale)
+        self.cfg = self._scale_cfg(scale_cfg(base_cfg, cfg_scale))
 
     def run(self, state: WorkflowState) -> WorkflowState:
         ctx = self.ctx
@@ -39,10 +88,11 @@ class ImageUpscaleStep(WorkflowStep):
         image = state.image
 
         positive = ConditioningConcat(ctx.positive_conditioning, ctx.eyes_conditioning)
-        positive = ConditioningConcat(positive, ctx.hair_conditioning)
         positive = ConditioningConcat(positive, ctx.skin_conditioning)
+        positive = ConditioningConcat(positive, ctx.hair_conditioning)
+        positive = ConditioningConcat(positive, ctx.face_conditioning)
 
-        if ctx.swap_method == "instantid":
+        if self.use_instantid:
             model, positive, negative = ApplyInstantIDAdvanced(
                 instantid=ctx.instantid,
                 insightface=ctx.faceanalysis,
@@ -94,11 +144,12 @@ class ImageUpscaleStep(WorkflowStep):
             model=model,
             positive=positive,
             negative=negative,
-            steps=ctx.steps["image_upscale"],
-            cfg=self._scale_cfg(ctx.cfg["image_upscale"]),
+            steps=self.steps,
+            cfg=self.cfg,
             denoise=denoise,
             num_iterations=num_iter,
             seed_offset=self.metadata.order,
+            add_noise=False,
             sharpen=0.4,
             apply_cn=False,
         )

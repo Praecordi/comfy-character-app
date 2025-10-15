@@ -1,18 +1,70 @@
 from comfy_nodes import *
 
+from utils import scale_cfg, scale_steps
 from workflow.state import WorkflowState
 from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 
 @register_step
 class DetailFaceStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Face Detail", order=3)
+    metadata = WorkflowMetadata(
+        label="Face Detail",
+        order=3,
+        parameters={
+            "swap_method": {
+                "type": "radio",
+                "choices": [
+                    ("Use InstantID & ReActor", "both"),
+                    ("Use InstantID", "instantid"),
+                    ("Use ReActor", "reactor"),
+                    ("Use Prompt Only", "prompt"),
+                ],
+                "value": "instantid",
+                "label": "Face Swap Method",
+            },
+            "strength": {
+                "type": "slider",
+                "minimum": 0,
+                "maximum": 1,
+                "step": 0.05,
+                "value": 0.5,
+                "label": "Swap Strength",
+            },
+            "cfg": {"type": "number", "label": "CFG", "value": 8},
+        },
+    )
     applymask = True
 
-    def apply_face_sampling(self, state):
-        ctx = self.ctx
+    def _init(self, swap_method=None, strength=None, cfg=None):
+        self.swap_method = (
+            swap_method
+            if swap_method
+            else self.metadata.parameters["swap_method"]["value"]
+        )
+        self.strength = (
+            strength if strength else self.metadata.parameters["strength"]["value"]
+        )
+        base_step = 15
+        base_cfg = 4
 
+        if self.ctx.type in ["Lightning", "Hyper4S"]:
+            step_scale = 6
+        elif self.ctx.type in ["Hyper8S", "Turbo"]:
+            step_scale = 10
+        elif self.ctx.type == "fewsteplora":
+            step_scale = 8
+        else:
+            step_scale = 30
+
+        cfg_scale = cfg if cfg else self.metadata.parameters["cfg"]["value"]
+
+        self.steps = scale_steps(base_step, step_scale)
+        self.cfg = self._scale_cfg(scale_cfg(base_cfg, cfg_scale))
+
+    def apply_face_sampling(self, state):
         image = state.image
+
+        ctx = self.ctx
 
         sam = LayerMaskSegmentAnythingUltraV2
 
@@ -26,16 +78,17 @@ class DetailFaceStep(WorkflowStep):
             prompt="face",
             threshold=0.5,
             cache_model=False,
+            device=sam.device.cpu,
         )
 
         cropped_image, cropped_mask, crop_box, _ = LayerUtilityCropByMaskV2(
             image,
             mask,
             detect="mask_area",
-            top_reserve=100,
-            bottom_reserve=100,
-            left_reserve=100,
-            right_reserve=100,
+            top_reserve=250,
+            bottom_reserve=250,
+            left_reserve=250,
+            right_reserve=250,
         )
         width, height, _ = GetImageSize(cropped_image)
 
@@ -56,9 +109,10 @@ class DetailFaceStep(WorkflowStep):
                 method=ImageResize_.method.keep_proportion,
             )
 
-        positive = ConditioningConcat(ctx.face_conditioning, ctx.positive_conditioning)
+        positive = ctx.face_conditioning
+        # positive = ConditioningConcat(ctx.face_conditioning, ctx.eyes_conditioning)
 
-        if ctx.swap_method == "instantid":
+        if self.swap_method in ["instantid", "both"]:
             model, positive, negative = ApplyInstantIDAdvanced(
                 instantid=ctx.instantid,
                 insightface=ctx.faceanalysis,
@@ -67,7 +121,7 @@ class DetailFaceStep(WorkflowStep):
                 model=ctx.model,
                 positive=positive,
                 negative=ctx.negative_conditioning,
-                ip_weight=0.8,
+                ip_weight=self.strength,
                 cn_strength=0.5,
                 start_at=0.8,
                 end_at=1.0,
@@ -89,15 +143,15 @@ class DetailFaceStep(WorkflowStep):
             model=model,
             positive=positive,
             negative=negative,
-            steps=ctx.steps["detail_face"],
-            cfg=self._scale_cfg(ctx.cfg["detail_face"]),
+            steps=self.steps,
+            cfg=self.cfg,
             denoise=(0.8, 0.6),
             num_iterations=3,
             seed_offset=self.metadata.order,
             optional_mask=cropped_mask if self.applymask else None,
             apply_color_match=True,
             apply_cn=True,
-            cn_strength=0.6,
+            cn_strength=1 - self.strength,
             cn_limits=(0, 1),
         )
 
@@ -113,14 +167,12 @@ class DetailFaceStep(WorkflowStep):
             image, cropped_image, False, crop_box, cropped_mask
         )
 
-        latent = VAEEncode(image, ctx.vae)
-
-        return state.update(latent=latent, image=image)
+        return image
 
     def apply_reactor(self, state):
-        ctx = self.ctx
-
         image = state.image
+
+        ctx = self.ctx
 
         face_model = ReActorBuildFaceModel(
             False,
@@ -139,22 +191,28 @@ class DetailFaceStep(WorkflowStep):
             restore_with_main_after=True,
         )
 
-        image, _, _ = ReActorFaceSwap(
+        options = ReActorOptions(restore_swapped_only=True)
+
+        image, _, _ = ReActorFaceSwapOpt(
             enabled=True,
             input_image=image,
             face_model=face_model,
             face_boost=booster,
-            swap_model=ReActorFaceSwap.swap_model.inswapper_128_onnx,
-            facedetection=ReActorFaceSwap.facedetection.retinaface_resnet50,
-            face_restore_model=ReActorFaceSwap.face_restore_model.codeformer_v0_1_0,
+            swap_model=ReActorFaceSwapOpt.swap_model.inswapper_128_onnx,
+            facedetection=ReActorFaceSwapOpt.facedetection.retinaface_resnet50,
+            face_restore_model=ReActorFaceSwapOpt.face_restore_model.codeformer_v0_1_0,
+            options=options,
         )
 
-        latent = VAEDecode(image, ctx.vae)
-
-        return state.update(image=image, latent=latent)
+        return image
 
     def run(self, state: WorkflowState) -> WorkflowState:
-        if self.ctx.swap_method in ["instantid", "prompt"]:
-            return self.apply_face_sampling(state)
-        else:
-            return self.apply_reactor(state)
+        if self.swap_method in ["both", "reactor"]:
+            image = self.apply_reactor(state)
+
+        if self.swap_method in ["both", "instantid", "prompt"]:
+            image = self.apply_face_sampling(state)
+
+        latent = VAEDecode(image, self.ctx.vae)
+
+        return state.update(image=image, latent=latent)

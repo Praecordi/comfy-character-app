@@ -202,7 +202,6 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
         "hair_prompt",
         "eyes_prompt",
         "face_images",
-        "swap_method",
         "positive_prompt",
         "negative_prompt",
         "character",
@@ -256,7 +255,6 @@ def _bind_local_storage(
         "positive_prompt",
         "negative_prompt",
         "character",
-        "swap_method",
     ]
     output_components = [
         "input_image",
@@ -285,7 +283,6 @@ def _bind_local_storage(
         "hair_prompt",
         "eyes_prompt",
         "face_images",
-        "swap_method",
         "positive_prompt",
         "negative_prompt",
         "character",
@@ -312,6 +309,7 @@ def _bind_local_storage(
             if not disable
             else gr.update(value="none", interactive=not disable)
         )
+
         return [
             None,
             checkpoint,
@@ -339,19 +337,11 @@ def _bind_local_storage(
             char_tuple[4],
             char_tuple[5],
             char_tuple[6],
-            state.get("swap_method", "instantid"),
             state.get("positive_prompt", ""),
             state.get("negative_prompt", ""),
             character,
             make_character_description(character),
         ]
-
-    for key in persist_components:
-        components[key].change(
-            save_state,
-            inputs=[components[x] for x in persist_components],
-            outputs=[components["browser_state"]],
-        )
 
     block.load(
         load_state,
@@ -359,6 +349,13 @@ def _bind_local_storage(
         outputs=[components[x] for x in output_components],
     )
     block.unload(lambda: queue.cancel_all())
+
+    for key in persist_components:
+        components[key].change(
+            save_state,
+            inputs=[components[x] for x in persist_components],
+            outputs=[components["browser_state"]],
+        )
 
 
 def _bind_preview_refresh(components: Dict[str, gr.Component], runner: WorkflowRunner):

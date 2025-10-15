@@ -1,14 +1,49 @@
 from comfy_nodes import *
 
+from utils import scale_steps, scale_cfg
 from workflow.state import WorkflowState
 from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 
 @register_step
 class DetailSkinStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Skin Detail", order=2)
+    metadata = WorkflowMetadata(
+        label="Skin Detail",
+        order=2,
+        parameters={
+            "cfg": {"type": "number", "label": "CFG", "value": 8},
+            "use_instantid": {
+                "type": "checkbox",
+                "value": True,
+                "label": "Use InstantID",
+            },
+        },
+    )
     usebbox = False
     applymask = True
+
+    def _init(self, cfg=None, use_instantid=None):
+        self.use_instantid = (
+            use_instantid
+            if use_instantid
+            else self.metadata.parameters["use_instantid"]["value"]
+        )
+        base_step = (15, 10)
+        base_cfg = (6, 4)
+
+        if self.ctx.type in ["Lightning", "Hyper4S"]:
+            step_scale = 6
+        elif self.ctx.type in ["Hyper8S", "Turbo"]:
+            step_scale = 10
+        elif self.ctx.type == "fewsteplora":
+            step_scale = 8
+        else:
+            step_scale = 30
+
+        cfg_scale = cfg if cfg else self.metadata.parameters["cfg"]["value"]
+
+        self.steps = scale_steps(base_step, step_scale)
+        self.cfg = self._scale_cfg(scale_cfg(base_cfg, cfg_scale))
 
     def _skin_segment(self, image):
         sam = LayerMaskSegmentAnythingUltraV2
@@ -23,6 +58,7 @@ class DetailSkinStep(WorkflowStep):
             prompt="person",
             threshold=0.5,
             cache_model=False,
+            device=sam.device.cpu,
         )
         _, clothes_mask = sam(
             image,
@@ -34,6 +70,7 @@ class DetailSkinStep(WorkflowStep):
             prompt="clothes",
             threshold=0.5,
             cache_model=False,
+            device=sam.device.cpu,
         )
         _, hair_mask = sam(
             image,
@@ -45,6 +82,7 @@ class DetailSkinStep(WorkflowStep):
             prompt="hair",
             threshold=0.5,
             cache_model=False,
+            device=sam.device.cpu,
         )
 
         mask = MasksSubtract(person_mask, clothes_mask)
@@ -87,7 +125,35 @@ class DetailSkinStep(WorkflowStep):
                 method=ImageResize_.method.keep_proportion,
             )
 
-        model = DifferentialDiffusion(ctx.model)
+        positive = ctx.skin_conditioning
+        # positive = ConditioningConcat(ctx.skin_conditioning, ctx.eyes_conditioning)
+        # positive = ConditioningConcat(positive, ctx.face_conditioning)
+
+        if self.use_instantid:
+            model, positive, negative = ApplyInstantIDAdvanced(
+                instantid=ctx.instantid,
+                insightface=ctx.faceanalysis,
+                control_net=ctx.instantid_cn,
+                image=ctx.face_image,
+                model=ctx.lora_model,
+                positive=positive,
+                negative=ctx.negative_conditioning,
+                ip_weight=0.8,
+                cn_strength=0.5,
+                start_at=0.7,
+                end_at=1.0,
+                noise=0.1,
+                combine_embeds=ApplyInstantIDAdvanced.combine_embeds.average,
+                image_kps=image,
+            )
+        else:
+            model, positive, negative = (
+                ctx.lora_model,
+                positive,
+                ctx.negative_conditioning,
+            )
+
+        model = DifferentialDiffusion(model)
 
         cropped_mask = GrowMask(cropped_mask, expand=30)
         cropped_mask = MaskBlur(cropped_mask, amount=70)
@@ -96,12 +162,12 @@ class DetailSkinStep(WorkflowStep):
 
         cropped_latent = self._iterative_latent_upscale(
             latent=cropped_latent,
-            scale=1.6,
+            scale=1.3,
             model=model,
-            positive=ctx.skin_conditioning,
-            negative=ctx.negative_conditioning,
-            steps=ctx.steps["detail_skin"],
-            cfg=self._scale_cfg(ctx.cfg["detail_skin"]),
+            positive=positive,
+            negative=negative,
+            steps=self.steps,
+            cfg=self.cfg,
             denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=self.metadata.order,

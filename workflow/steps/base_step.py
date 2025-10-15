@@ -42,10 +42,10 @@ class BaseGenStep(WorkflowStep):
             sigmas = BasicScheduler(
                 model=ctx.lora_model,
                 scheduler=ctx.scheduler_name,
-                steps=ctx.steps["base_gen"],
+                steps=ctx.step,
                 denoise=1,
             )
-            _, sigmas2 = SplitSigmas(sigmas, int(ctx.steps["base_gen"] * 0.65))
+            _, sigmas2 = SplitSigmas(sigmas, int(ctx.step * 0.65))
 
             sampler = KSamplerSelect(ctx.sampler_name)
 
@@ -53,7 +53,7 @@ class BaseGenStep(WorkflowStep):
                 model=ctx.lora_model,
                 positive=positive,
                 negative=negative,
-                cfg=self._scale_cfg(ctx.cfg["base_gen"], scale_for_cn=True),
+                cfg=self._scale_cfg(ctx.cfg, scale_for_cn=True),
             )
 
             latent = AddNoise(ctx.lora_model, perturb_noise, sigmas2, latent)

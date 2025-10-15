@@ -26,8 +26,9 @@ class WorkflowContext:
     sampler_name: csn.Samplers = field(default=None)
     scheduler_name: csn.Schedulers = field(default=None)
     sampler: csn.Sampler = field(default=None)
-    steps: Dict[str, Union[int, Tuple]] = field(default=None)
+    step: Dict[str, Union[int, Tuple]] = field(default=None)
     cfg: Dict[str, Union[int, float, Tuple]] = field(default=None)
+    type: str = field(default=None)
     resolution: str = field(default=None)
 
     sam_model: csn.SamModel = field(default=None)
@@ -64,7 +65,6 @@ class WorkflowContext:
     instantid: csn.Instantid = field(default=None)
     faceanalysis: csn.Faceanalysis = field(default=None)
     instantid_cn: csn.ControlNet = field(default=None)
-    swap_method: str = field(default=None)
 
     def update(self, **kwargs) -> "WorkflowContext":
         for key, value in kwargs.items():

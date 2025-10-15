@@ -1,13 +1,36 @@
 from comfy_nodes import *
 
+from utils import scale_cfg, scale_steps
 from workflow.state import WorkflowState
 from workflow.steps import WorkflowStep, register_step, WorkflowMetadata
 
 
 @register_step
 class DetailHairStep(WorkflowStep):
-    metadata = WorkflowMetadata(label="Hair Detail", order=4)
+    metadata = WorkflowMetadata(
+        label="Hair Detail",
+        order=4,
+        parameters={"cfg": {"type": "number", "label": "CFG", "value": 8}},
+    )
     applymask = True
+
+    def _init(self, cfg=None):
+        base_step = (15, 10)
+        base_cfg = (7, 5)
+
+        if self.ctx.type in ["Lightning", "Hyper4S"]:
+            step_scale = 6
+        elif self.ctx.type in ["Hyper8S", "Turbo"]:
+            step_scale = 10
+        elif self.ctx.type == "fewsteplora":
+            step_scale = 8
+        else:
+            step_scale = 30
+
+        cfg_scale = cfg if cfg else self.metadata.parameters["cfg"]["value"]
+
+        self.steps = scale_steps(base_step, step_scale)
+        self.cfg = self._scale_cfg(scale_cfg(base_cfg, cfg_scale))
 
     def run(self, state: WorkflowState) -> WorkflowState:
         ctx = self.ctx
@@ -26,6 +49,7 @@ class DetailHairStep(WorkflowStep):
             prompt="hair",
             threshold=0.5,
             cache_model=False,
+            device=sam.device.cpu,
         )
 
         cropped_image, cropped_mask, crop_box, _ = LayerUtilityCropByMaskV2(
@@ -69,8 +93,8 @@ class DetailHairStep(WorkflowStep):
             model=model,
             positive=ctx.hair_conditioning,
             negative=ctx.negative_conditioning,
-            steps=ctx.steps["detail_hair"],
-            cfg=self._scale_cfg(ctx.cfg["detail_hair"]),
+            steps=self.steps,
+            cfg=self.cfg,
             denoise=(0.7, 0.6),
             num_iterations=2,
             seed_offset=self.metadata.order,
