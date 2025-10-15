@@ -248,6 +248,7 @@ class MainLayout:
                                 inputs=[gallery_state, gallery_index],
                                 interactive=False,
                                 lines=7,
+                                max_lines=7,
                                 show_label=False,
                                 scale=8,
                             )

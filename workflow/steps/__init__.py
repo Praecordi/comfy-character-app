@@ -41,10 +41,6 @@ class WorkflowStep(ABC):
     metadata: WorkflowMetadata
 
     def __init__(self, context: WorkflowContext, settings: Dict[str, Any] = {}):
-        """
-        context: The WorkflowContext instance
-        This allows access to models, configs, VAE, etc.
-        """
         self.ctx = context
         self._init(**settings)
 
@@ -84,6 +80,7 @@ class WorkflowStep(ABC):
         denoise,
         num_iterations=1,
         seed_offset=0,
+        add_noise=True,
         optional_mask=None,
         apply_cn=True,
         cn_strength=0.5,
@@ -95,7 +92,11 @@ class WorkflowStep(ABC):
         denoise = expand_iterations_linear(denoise, num_iterations)
         ratio = scale ** (1 / num_iterations)
 
-        base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
+        if add_noise:
+            base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
+        else:
+            base_noise = csn.DisableNoise()
+
         for i in range(num_iterations):
             if apply_cn:
                 cn_positive, cn_negative = csn.ControlNetApplyAdvanced(
@@ -148,6 +149,7 @@ class WorkflowStep(ABC):
         denoise,
         num_iterations=1,
         seed_offset=0,
+        add_noise=True,
         optional_mask=None,
         sharpen=0.8,
         apply_color_match=False,
@@ -166,6 +168,11 @@ class WorkflowStep(ABC):
             denoise, num_iterations, callback=lambda x: round(x, 2)
         )
         ratio = scale ** (1 / num_iterations)
+
+        if add_noise:
+            base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
+        else:
+            base_noise = csn.DisableNoise()
 
         for i in range(num_iterations):
             if apply_cn:
@@ -204,8 +211,6 @@ class WorkflowStep(ABC):
             latent = csn.VAEEncode(image, ctx.vae)
             if optional_mask is not None:
                 latent = csn.SetLatentNoiseMask(latent, optional_mask)
-
-            base_noise = csn.RandomNoise(ctx.base_seed + seed_offset)
 
             sigmas = csn.BasicScheduler(
                 model=model,

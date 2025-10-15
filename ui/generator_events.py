@@ -211,6 +211,7 @@ def _bind_buttons(components: Dict[str, gr.Component], runner: WorkflowRunner):
     generate_caption_outputs = ["positive_prompt"]
 
     async def queue(*args):
+        gr.Info("Workflow Queued", duration=2)
         await runner.queue(dict(zip(generate_inputs, args)))
 
     async def generate_caption(*args):
