@@ -8,13 +8,17 @@ from constants import comfyui_input, comfyui_output, comfyui_temp
 ui_checkpoints = [
     (str(x).replace(".safetensors", ""), str(x))
     for x in Checkpoints
-    if str(x).lower().startswith("sdxl") or str(x).lower().startswith("pony")
+    if str(x).lower().startswith("sdxl")
+    or str(x).lower().startswith("pony")
+    or str(x).lower().startswith("illustrious")
 ]
 
 ui_loras = [
     (str(x).replace(".safetensors", ""), str(x))
     for x in Loras
-    if str(x).lower().startswith("sdxl") or str(x).lower().startswith("pony")
+    if str(x).lower().startswith("sdxl")
+    or str(x).lower().startswith("pony")
+    or str(x).lower().startswith("illustrious")
 ]
 
 ui_resolutions = [
