@@ -25,7 +25,7 @@ class DetailSkinStep(WorkflowStep):
     def _init(self, cfg=None, use_instantid=None):
         self.use_instantid = (
             use_instantid
-            if use_instantid
+            if use_instantid is not None
             else self.metadata.parameters["use_instantid"]["value"]
         )
         base_step = (15, 10)
@@ -40,7 +40,7 @@ class DetailSkinStep(WorkflowStep):
         else:
             step_scale = 30
 
-        cfg_scale = cfg if cfg else self.metadata.parameters["cfg"]["value"]
+        cfg_scale = cfg if cfg is not None else self.metadata.parameters["cfg"]["value"]
 
         self.steps = scale_steps(base_step, step_scale)
         self.cfg = self._scale_cfg(scale_cfg(base_cfg, cfg_scale))

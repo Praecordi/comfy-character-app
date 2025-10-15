@@ -38,11 +38,13 @@ class DetailFaceStep(WorkflowStep):
     def _init(self, swap_method=None, strength=None, cfg=None):
         self.swap_method = (
             swap_method
-            if swap_method
+            if swap_method is not None
             else self.metadata.parameters["swap_method"]["value"]
         )
         self.strength = (
-            strength if strength else self.metadata.parameters["strength"]["value"]
+            strength
+            if strength is not None
+            else self.metadata.parameters["strength"]["value"]
         )
         base_step = 15
         base_cfg = 4
@@ -56,7 +58,7 @@ class DetailFaceStep(WorkflowStep):
         else:
             step_scale = 30
 
-        cfg_scale = cfg if cfg else self.metadata.parameters["cfg"]["value"]
+        cfg_scale = cfg if cfg is not None else self.metadata.parameters["cfg"]["value"]
 
         self.steps = scale_steps(base_step, step_scale)
         self.cfg = self._scale_cfg(scale_cfg(base_cfg, cfg_scale))
