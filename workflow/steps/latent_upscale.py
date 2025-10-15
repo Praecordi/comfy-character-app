@@ -165,6 +165,27 @@ class LatentUpscaleStep(WorkflowStep):
             factor=1,
         )
 
+        new_width = BasicDataHandlingCastToInt(
+            BasicDataHandlingFloatMultiply(
+                BasicDataHandlingCastToFloat(state.width), self.latent_scale
+            )
+        )
+        new_height = BasicDataHandlingCastToInt(
+            BasicDataHandlingFloatMultiply(
+                BasicDataHandlingCastToFloat(state.height), self.latent_scale
+            )
+        )
+
+        image, _, _ = ImageResize_(
+            image,
+            new_width,
+            new_height,
+            interpolation=ImageResize_.interpolation.lanczos,
+            method=ImageResize_.method.stretch,
+        )
+
         latent = VAEEncode(image, ctx.vae)
 
-        return state.update(latent=latent, image=image)
+        return state.update(
+            latent=latent, image=image, width=new_width, height=new_height
+        )

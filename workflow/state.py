@@ -8,6 +8,8 @@ from typing import Optional, Union, Tuple, Dict
 class WorkflowState:
     latent: Optional[csn.Latent]
     image: Optional[csn.Image]
+    width: Optional[csn.Int]
+    height: Optional[csn.Int]
     mask: Optional[csn.Mask] = None
 
     def update(self, **kwargs) -> "WorkflowState":

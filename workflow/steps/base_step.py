@@ -13,9 +13,10 @@ class BaseGenStep(WorkflowStep):
 
         if ctx.input_image:
             image = ctx.input_image
+            width, height, _ = GetImageSize(image)
             latent = VAEEncode(image, ctx.vae)
 
-            return state.update(latent=latent, image=image)
+            return state.update(latent=latent, image=image, width=width, height=height)
         else:
             latent = state.latent
 
@@ -67,5 +68,6 @@ class BaseGenStep(WorkflowStep):
             )
 
             image = VAEDecode(latent, ctx.vae)
+            width, height, _ = GetImageSize(image)
 
-            return state.update(latent=latent, image=image)
+            return state.update(latent=latent, image=image, width=width, height=height)

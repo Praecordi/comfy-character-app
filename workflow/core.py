@@ -396,7 +396,11 @@ class CharacterWorkflow:
             )
             image = csn.VAEDecode(latent, self.ctx.vae)
 
-            state = WorkflowState(latent=latent, image=image)
+            width, height, _ = csn.GetImageSize(image)
+
+            state = WorkflowState(
+                latent=latent, image=image, width=width, height=height
+            )
 
             for i, step in enumerate(self.iter_wf(controller)):
                 state = step.run(state)
