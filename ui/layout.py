@@ -99,10 +99,12 @@ class MainLayout:
         )
 
         def add_step(selected, controller, steps):
-            if not selected:
+            if selected is None:
                 return gr.update(value=None), controller, steps
 
-            new_controller = controller + [{"step": selected, "settings": {}}]
+            new_controller = controller + [
+                {"step": selected, "settings": {}, "enabled": True}
+            ]
             new_steps = steps + [selected]
             return (gr.update(value=None), new_controller, new_steps)
 
@@ -124,63 +126,118 @@ class MainLayout:
 
             return _update
 
+        def toggle_enabled_at(idx):
+            def _toggle(controller, value):
+                controller[idx]["enabled"] = value
+                return controller
+
+            return _toggle
+
+        def move_step(idx, direction):
+            def _move(controller, steps):
+                new_idx = idx + direction
+                if 0 <= new_idx < len(controller):
+                    controller[idx], controller[new_idx] = (
+                        controller[new_idx],
+                        controller[idx],
+                    )
+                    steps[idx], steps[new_idx] = steps[new_idx], steps[idx]
+                return controller, steps
+
+            return _move
+
         def render_step_at(idx, step_name, step_settings, step_options):
             with gr.Row(key=f"{idx}row"):
-                with gr.Column(scale=4, key=f"{idx}col"), gr.Accordion(
-                    f"{idx+1}. {step_name}", open=False, key=f"{idx}step"
+                with gr.Column(key=f"{idx}outer_col", scale=10), gr.Row(
+                    equal_height=True, key=f"{idx}inner_row"
                 ):
-                    for label, params in step_options[step_name].items():
-                        el_params = {k: v for k, v in params.items() if not k == "type"}
-                        el_params["value"] = (
-                            step_settings[label]
-                            if label in step_settings
-                            else el_params["value"]
-                        )
-                        if params["type"] == "slider":
-                            param_element = gr.Slider(
-                                **el_params,
-                                key=f"{label}{idx}_slider",
-                            )
-                        elif params["type"] == "radio":
-                            param_element = gr.Radio(
-                                **el_params,
-                                key=f"{label}{idx}_radio",
-                            )
-                        elif params["type"] == "checkbox":
-                            param_element = gr.Checkbox(
-                                **el_params,
-                                key=f"{label}{idx}_checkbox",
-                            )
-                        elif params["type"] == "checkboxgroup":
-                            param_element = gr.CheckboxGroup(
-                                **el_params,
-                                key=f"{label}{idx}_checkboxgroup",
-                            )
-                        elif params["type"] == "number":
-                            param_element = gr.Number(
-                                **el_params,
-                                key=f"{label}{idx}_number",
-                            )
-                        else:
-                            continue
+                    enabled = gr.Checkbox(
+                        value=step_settings.get("enabled", True),
+                        show_label=False,
+                        label="",
+                        key=f"enabled{idx}",
+                        min_width=0,
+                        scale=1,
+                    )
 
-                        param_element.change(
-                            update_setting_at(idx, label),
-                            inputs=[
-                                process_controller,
-                                param_element,
-                            ],
-                            outputs=[process_controller],
-                        )
+                    with gr.Column(scale=10, key=f"{idx}col"), gr.Accordion(
+                        f"{idx+1}. {step_name}", open=False, key=f"{idx}step"
+                    ):
+                        for label, params in step_options[step_name].items():
+                            el_params = {
+                                k: v for k, v in params.items() if not k == "type"
+                            }
+                            el_params["value"] = (
+                                step_settings[label]
+                                if label in step_settings
+                                else el_params["value"]
+                            )
+                            if params["type"] == "slider":
+                                param_element = gr.Slider(
+                                    **el_params,
+                                    key=f"{label}{idx}_slider",
+                                )
+                            elif params["type"] == "radio":
+                                param_element = gr.Radio(
+                                    **el_params,
+                                    key=f"{label}{idx}_radio",
+                                )
+                            elif params["type"] == "checkbox":
+                                param_element = gr.Checkbox(
+                                    **el_params,
+                                    key=f"{label}{idx}_checkbox",
+                                )
+                            elif params["type"] == "checkboxgroup":
+                                param_element = gr.CheckboxGroup(
+                                    **el_params,
+                                    key=f"{label}{idx}_checkboxgroup",
+                                )
+                            elif params["type"] == "number":
+                                param_element = gr.Number(
+                                    **el_params,
+                                    key=f"{label}{idx}_number",
+                                )
+                            else:
+                                continue
 
+                            param_element.change(
+                                update_setting_at(idx, label),
+                                inputs=[
+                                    process_controller,
+                                    param_element,
+                                ],
+                                outputs=[process_controller],
+                            )
+
+                move_up_btn = gr.Button("⬆️", scale=1, min_width=0)
+                move_down_btn = gr.Button("⬇️", scale=1, min_width=0)
                 remove_btn = gr.Button(
-                    "Remove Step", variant="stop", scale=1, key=f"btn{idx}"
+                    "Remove Step", variant="stop", scale=2, key=f"btn{idx}"
                 )
-                remove_btn.click(
-                    remove_step_at(idx),
-                    inputs=[process_controller, internal_steps],
-                    outputs=[process_controller, internal_steps],
-                )
+
+            enabled.change(
+                toggle_enabled_at(idx),
+                inputs=[process_controller, enabled],
+                outputs=[process_controller],
+            )
+
+            move_up_btn.click(
+                move_step(idx, -1),
+                inputs=[process_controller, internal_steps],
+                outputs=[process_controller, internal_steps],
+            )
+
+            move_down_btn.click(
+                move_step(idx, 1),
+                inputs=[process_controller, internal_steps],
+                outputs=[process_controller, internal_steps],
+            )
+
+            remove_btn.click(
+                remove_step_at(idx),
+                inputs=[process_controller, internal_steps],
+                outputs=[process_controller, internal_steps],
+            )
 
         with gr.Group():
             gr.Markdown("Process Controller", container=True)
@@ -197,7 +254,11 @@ class MainLayout:
                 outputs=[step_dropdown, process_controller, internal_steps],
             )
 
-            @gr.render(inputs=process_controller, triggers=[internal_steps.change])
+            @gr.render(
+                inputs=process_controller,
+                triggers=[internal_steps.change],
+                trigger_mode="once",
+            )
             def render_step_settings(controller):
                 with gr.Column():
                     for i, step in enumerate(controller):

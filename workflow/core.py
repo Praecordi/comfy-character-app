@@ -383,7 +383,8 @@ class CharacterWorkflow:
 
         for i, step in enumerate(controller):
             step_instance = _STEP_REGISTRY[step["step"]](self.ctx, step["settings"])
-            steps.append((i, step_instance))
+            if step["enabled"]:
+                steps.append((i, step_instance))
 
         for _, step in sorted(steps, key=lambda x: x[0]):
             yield step

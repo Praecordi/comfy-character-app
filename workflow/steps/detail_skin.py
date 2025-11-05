@@ -101,10 +101,10 @@ class DetailSkinStep(WorkflowStep):
             image,
             mask,
             detect="mask_area",
-            top_reserve=100,
-            bottom_reserve=100,
-            left_reserve=100,
-            right_reserve=100,
+            top_reserve=250,
+            bottom_reserve=250,
+            left_reserve=250,
+            right_reserve=250,
         )
         width, height, _ = GetImageSize(cropped_image)
 
@@ -125,7 +125,7 @@ class DetailSkinStep(WorkflowStep):
                 method=ImageResize_.method.keep_proportion,
             )
 
-        positive = ctx.skin_conditioning
+        positive = ConditioningConcat(ctx.skin_conditioning, ctx.positive_conditioning)
         # positive = ConditioningConcat(ctx.skin_conditioning, ctx.eyes_conditioning)
         # positive = ConditioningConcat(positive, ctx.face_conditioning)
 
@@ -138,7 +138,7 @@ class DetailSkinStep(WorkflowStep):
                 model=ctx.lora_model,
                 positive=positive,
                 negative=ctx.negative_conditioning,
-                ip_weight=0.8,
+                ip_weight=0.4,
                 cn_strength=0.5,
                 start_at=0.7,
                 end_at=1.0,

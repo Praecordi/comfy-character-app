@@ -53,7 +53,7 @@ class LatentUpscaleStep(WorkflowStep):
         self.concat_conditioning = (
             concat_conditioning
             if concat_conditioning is not None
-            else self.metadata.parameters["concat_conditionings"]["value"]
+            else self.metadata.parameters["concat_conditioning"]["value"]
         )
         self.latent_scale = (
             latent_scale
@@ -123,7 +123,7 @@ class LatentUpscaleStep(WorkflowStep):
                 model=ctx.lora_model,
                 positive=positive,
                 negative=ctx.negative_conditioning,
-                ip_weight=0.8,
+                ip_weight=0.4,
                 cn_strength=0.5,
                 start_at=0.7,
                 end_at=1.0,

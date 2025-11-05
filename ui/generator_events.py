@@ -325,7 +325,7 @@ def _bind_local_storage(
             state.get("enable_style", True),
             state.get("style_prompt", ""),
             state.get("use_detail_daemon", False),
-            state.get("process_controller", {}),
+            state.get("process_controller", []),
             state.get("base_seed", -1),
             state.get("perturb_seed", -1),
             gr.update(),
